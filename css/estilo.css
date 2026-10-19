@@ -288,9 +288,8 @@ input[type=file]{padding:0;border:0}
 
 /* marca Arcos Jobim */
 .mk{display:block;flex:none}
-.lg-d{display:none}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .lg-l{display:none}:root:not([data-theme="light"]) .lg-d{display:block}}
-:root[data-theme="dark"] .lg-l{display:none}:root[data-theme="dark"] .lg-d{display:block}
+.mk-badge{display:inline-flex;align-items:center;justify-content:center;background:#0C1B27;border-radius:9px;padding:4px;flex:none}
+.mk-badge.mk-sm{border-radius:6px;padding:3px}
 .logo-login{width:min(300px,70%);height:auto;display:block}
 .login-side .prod{font:600 22px/1 var(--font-display);letter-spacing:.14em;text-transform:uppercase;color:var(--panel-dim)}
 .rodape{max-width:1180px;margin:24px auto 0;padding:16px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-3);font-size:12px;border-top:1px solid var(--line)}

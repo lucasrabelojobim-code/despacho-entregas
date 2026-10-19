@@ -6,13 +6,13 @@ function toast(t){toastEl.textContent=t;toastEl.hidden=false;clearTimeout(toastT
 function openModal(html,narrow){ov.innerHTML='<div class="dlg'+(narrow?' narrow':'')+'" role="dialog" aria-modal="true">'+html+'</div>';ov.hidden=false;var f=ov.querySelector('[autofocus]');if(f)f.focus();}
 function closeModal(){ov.hidden=true;ov.innerHTML='';}
 function mh(title,sub){return '<div class="dlg-h"><div><h2>'+title+'</h2>'+(sub?'<div class="muted" style="margin-top:4px">'+sub+'</div>':'')+'</div><button class="btn btn-sm" data-act="close" type="button">Fechar</button></div>';}
-function mark(){return '<img class="mk lg-l" src="marca/icone.png" alt="Arcos Jobim" width="34" height="34"><img class="mk lg-d" src="marca/icone-escuro.png" alt="" width="34" height="34">';}
-function rodape(){return '<footer class="rodape"><img class="mk lg-l" src="marca/icone.png" alt="" width="20" height="20"><img class="mk lg-d" src="marca/icone-escuro.png" alt="" width="20" height="20"><span>Desenvolvido por <b>Arcos Jobim</b> · Automação &amp; Software</span></footer>';}
+function mark(){return '<span class="mk-badge"><img class="mk" src="marca/icone.png" alt="Arcos Jobim" width="30" height="30"></span>';}
+function rodape(){return '<footer class="rodape"><span class="mk-badge mk-sm"><img class="mk" src="marca/icone.png" alt="" width="20" height="20"></span><span>Desenvolvido por <b>Arcos Jobim</b> · Automação &amp; Software</span></footer>';}
 function save(){return Dados.salvar();}
 /* ============ login ============ */
 function viewLogin(){
   return '<div class="login">'+
-  '<section class="login-side"><img class="logo-login" src="marca/logo-escuro.png" alt="Arcos Jobim · Automação &amp; Software"><div class="prod">Despacho de Entregas</div>'+
+  '<section class="login-side"><img class="logo-login" src="marca/logo.svg" alt="Arcos Jobim · Automação &amp; Software"><div class="prod">Despacho de Entregas</div>'+
   '<h1>Cada entrega, da separação ao retorno do motorista.</h1>'+
   '<ol class="flow"><li><b>Separado</b><span>produto conferido por código e quantidade</span></li><li><b>Saiu para entrega</b><span>horário de saída registrado</span></li><li><b>Entregue</b><span>foto e assinatura do cliente</span></li><li><b>Motorista retornou</b><span>fecha o ciclo da entrega</span></li></ol>'+
   '<p class="dim">Desvios também ficam registrados: devolvido, enviado errado, defeito, avaria e item faltando.</p></section>'+

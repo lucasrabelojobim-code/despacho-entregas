@@ -1,4 +1,4 @@
-<p align="center"><img src="marca/logo.png" alt="Arcos Jobim · Automação & Software" width="320"></p>
+<p align="center"><img src="marca/logo-readme.png" alt="Arcos Jobim · Automação & Software" width="420"></p>
 
 # Despacho de Entregas
 
