@@ -35,6 +35,12 @@ function boot(){
   app.innerHTML='<div class="carregando">Carregando…</div>';
   if(h.indexOf('#u-')===0){try{UI.prefill=decodeURIComponent(h.slice(3));}catch(e){}}
   Dados.restaurar().then(function(s){
+    /* link de motorista (#u-usuario): se houver sessão de admin neste navegador, encerra e mostra o login */
+    if(Dados.modo==='online'&&h.indexOf('#u-')===0&&s&&s.role==='admin'){
+      return Dados.sair().then(function(){return null;});
+    }
+    return s;
+  }).then(function(s){
     SESSION=s||null;
     if(Dados.modo==='local'&&h.indexOf('#mot-')===0){
       var c=DB.colaboradores.find(function(x){return x.token&&('mot-'+x.token)===h.slice(1);});
