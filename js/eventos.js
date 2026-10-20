@@ -14,6 +14,7 @@ document.addEventListener('click',function(ev){
     case 'gps-on':gpsLigar();break;
     case 'gps-off':gpsDesligar();renderApp();break;
     case 'geo-buscar':mrBuscarEndereco();break;
+    case 'geo-pick':escolherGeo(n);break;
     case 'map-tipo':UI.mapTipo=t.dataset.p;UI.mapSel=null;renderApp();break;
     case 'map-sel':UI.mapSel=(UI.mapSel===id?null:id);renderApp();break;
     case 'map-stop':UI.drv.hl=n;renderApp();break;

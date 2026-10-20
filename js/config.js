@@ -5,6 +5,8 @@ window.CONFIG = {
   supabaseUrl:'https://tagrkxrqbztsgxihjczf.supabase.co',          // ex.: https://abcdefgh.supabase.co
   supabaseKey:'sb_publishable_s11z_mL4Rg4BqhI9kte2Rw_4NB9xf_9',          // chave "anon public" (nunca use a service_role aqui)
   dominioLogin: 'despacho.app', // usuário "joao" vira joao@despacho.app no login online
+  empresaLat: null,         // ponto de saída das rotas (endereço real da empresa). Ex.: -3.1190
+  empresaLng: null,         // Ex.: -60.0217. Sem valores, usa um ponto de exemplo em Manaus
   mapaReal: true,           // true = mapa OpenStreetMap; false = mapa esquemático
   gps: true,                // permite o motorista ativar o GPS do celular
   gpsIntervaloSeg: 20,      // de quanto em quanto tempo enviar a posição

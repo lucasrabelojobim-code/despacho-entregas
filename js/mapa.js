@@ -134,7 +134,7 @@ function driverMapHtml(c,hl,conf){
   return '<section class="dcard" id="drv-map"><div class="row" style="justify-content:space-between"><h3>Sua rota</h3><span class="row"><span class="note">'+r.stops.length+(r.stops.length===1?' parada':' paradas')+'</span>'+seletorMini()+'</span></div>'+svg+mapLegend(false)+cap2+'</section>';
 }
 function pickMapHtml(){
-  if(usaReal())return '<div id="pickreal" class="rmap" style="height:260px"></div><div class="row" style="margin-top:6px"><button type="button" class="btn btn-sm" data-act="geo-buscar">Localizar pelo endereço</button></div>';
+  if(usaReal())return '<div id="pickreal" class="rmap" style="height:260px"></div><div class="row" style="margin-top:6px"><button type="button" class="btn btn-sm" data-act="geo-buscar">Localizar pelo endereço</button></div><div id="geo-res"></div>';
   return '<svg id="pickmap" class="map" viewBox="0 0 800 520" role="img" aria-label="Escolha o local da entrega">'+baseMap(1,true)+'<circle id="pick-mark" cx="0" cy="0" r="12" fill="var(--accent)" stroke="var(--surface)" stroke-width="3" hidden/></svg>';
 }
 function pickPos(svg,ev){

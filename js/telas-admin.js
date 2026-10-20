@@ -190,6 +190,18 @@ function saveEntrega(form,mode){
   var hm=fv(form,'prazo').split(':'),pz=new Date();pz.setHours(+hm[0],+hm[1],0,0);
   itens.forEach(function(i){if(!DB.catalogo.some(function(p){return p[0]===i.codigo;}))DB.catalogo.push([i.codigo,i.desc]);});
   var lat=fv(form,'plat')?+fv(form,'plat'):null,lng=fv(form,'plng')?+fv(form,'plng'):null,px=fv(form,'px')?+fv(form,'px'):null,py=fv(form,'py')?+fv(form,'py'):null;
+  /* sem local marcado: tenta achar o endereço sozinho no mapa antes de salvar */
+  if(lat==null&&lng==null&&usaReal()&&!form.dataset.geo){
+    var end=fv(form,'endereco').trim();
+    if(end){
+      form.dataset.geo='1';err.textContent='Localizando o endereço no mapa…';
+      geocodificar(end).then(function(a){
+        if(a.length){$('#ne-lat').value=a[0].lat.toFixed(6);$('#ne-lng').value=a[0].lng.toFixed(6);saveEntrega(form,mode);}
+        else{err.textContent='Não encontrei este endereço no mapa. Clique no mapa para marcar o local, ou salve de novo para criar a entrega sem local.';}
+      }).catch(function(){err.textContent='Não consegui consultar o mapa agora. Clique no mapa para marcar o local, ou salve de novo para criar a entrega sem local.';});
+      return;
+    }
+  }
   if(lat!=null&&lng!=null){var q=fromLL(lat,lng);px=Math.round(q.x);py=Math.round(q.y);}else{lat=null;lng=null;}
   var id=++DB.seq.ent,n=nowIso();
   DB.entregas.push({id:id,x:px,y:py,lat:lat,lng:lng,dia:todayKey(),cliente:fv(form,'cliente').trim(),endereco:fv(form,'endereco').trim(),motoristaId:fv(form,'mot'),status:mode==='rota'?'em_rota':'separado',prazo:pz.toISOString(),criadoEm:n,saidaEm:mode==='rota'?n:null,concluidoEm:null,retornoEm:null,itens:itens,obs:fv(form,'obs').trim(),recebedor:'',foto:null,assinatura:null});
