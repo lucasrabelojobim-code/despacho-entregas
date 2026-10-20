@@ -71,14 +71,33 @@ var DadosOnline=(function(){
     });
   }
 
-  /* envia fotos/assinaturas para o Storage e troca o data: pela URL */
+  /* envia fotos/assinaturas para o Storage (bucket privado) e troca o data: pelo CAMINHO do arquivo */
   function subir(path,dataUrl){
     return fetch(dataUrl).then(function(r){return r.blob();}).then(function(b){
-      return cli().storage.from('evidencias').upload(path,b,{upsert:true,contentType:b.type||'image/jpeg'});
+      return cli().storage.from('evidencias').upload(path,b,{upsert:false,contentType:b.type||'image/jpeg'});
     }).then(function(r){
       falhou(r);
-      return cli().storage.from('evidencias').getPublicUrl(path).data.publicUrl;
+      return path;
     });
+  }
+  /* o campo foto/assinatura guarda o caminho; registros antigos guardam o link público, de onde tiramos o caminho */
+  var urls={}, urlsT=0;
+  function caminho(v){
+    if(!v)return null;
+    v=String(v);
+    if(v.indexOf('data:')===0||v==='exemplo')return null;
+    var i=v.indexOf('/evidencias/');
+    if(/^https?:/.test(v))return i>=0?decodeURIComponent(v.slice(i+12).split('?')[0]):null;
+    return v;
+  }
+  /* pede ao Supabase links temporários (1 hora) para as fotos/assinaturas informadas */
+  function assinar(lista){
+    if(Date.now()-urlsT>50*60000){urls={};urlsT=Date.now();}
+    var ps=lista.map(caminho).filter(function(p,i,a){return p&&!urls[p]&&a.indexOf(p)===i;});
+    if(!ps.length)return Promise.resolve();
+    return cli().storage.from('evidencias').createSignedUrls(ps,3600).then(function(r){
+      (r.data||[]).forEach(function(x){if(x.signedUrl&&x.path)urls[x.path]=x.signedUrl;});
+    }).catch(function(){});
   }
   function preparaEvidencias(e){
     var jobs=[];
@@ -165,6 +184,8 @@ var DadosOnline=(function(){
         }).then(falhou).then(function(){return c;});
       });
     },
+    assinar:assinar,
+    urlEvid:function(v){var p=caminho(v);return p===null?v:(urls[p]||null);},
     posicoes:function(){return pos;},
     enviarPosicao:function(motoristaId,lat,lng,prec){
       return cli().from('posicoes').insert({motorista_id:motoristaId,lat:lat,lng:lng,precisao:prec==null?null:Math.round(prec)}).then(function(){});

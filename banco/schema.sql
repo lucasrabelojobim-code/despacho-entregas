@@ -142,14 +142,26 @@ create policy pos_ler on public.posicoes for select to authenticated using (publ
 create policy pos_esc on public.posicoes for insert to authenticated with check (motorista_id = public.meu_colaborador());
 
 -- ============ FOTOS E ASSINATURAS (Storage) ============
-insert into storage.buckets (id, name, public) values ('evidencias', 'evidencias', true)
-  on conflict (id) do nothing;
+-- Bucket PRIVADO: as fotos só abrem por link temporário, gerado para quem tem permissão.
+-- Arquivos ficam em pastas "entrega-<número>/". Cada motorista só envia e lê arquivos
+-- das entregas dele; o administrador lê tudo. Ninguém altera arquivo já enviado.
+insert into storage.buckets (id, name, public) values ('evidencias', 'evidencias', false)
+  on conflict (id) do update set public = false;
 drop policy if exists evid_ler on storage.objects;
 drop policy if exists evid_esc on storage.objects;
 drop policy if exists evid_alt on storage.objects;
-create policy evid_ler on storage.objects for select using (bucket_id = 'evidencias');
-create policy evid_esc on storage.objects for insert to authenticated with check (bucket_id = 'evidencias');
-create policy evid_alt on storage.objects for update to authenticated using (bucket_id = 'evidencias');
+create policy evid_ler on storage.objects for select to authenticated using (
+  bucket_id = 'evidencias' and (
+    public.eh_admin() or exists (
+      select 1 from public.entregas e
+      where 'entrega-' || e.id::text = (storage.foldername(name))[1]
+        and e.motorista_id = public.meu_colaborador())));
+create policy evid_esc on storage.objects for insert to authenticated with check (
+  bucket_id = 'evidencias' and (
+    public.eh_admin() or exists (
+      select 1 from public.entregas e
+      where 'entrega-' || e.id::text = (storage.foldername(name))[1]
+        and e.motorista_id = public.meu_colaborador())));
 
 -- ============ PRIMEIRO ADMINISTRADOR ============
 -- 1) No Supabase: Authentication > Users > Add user > "Create new user"

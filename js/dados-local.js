@@ -29,6 +29,8 @@ var DadosLocal={
   sair:function(){return Promise.resolve();},
   atualizar:function(){return Promise.resolve(false);},
   criarAcesso:function(c){return Promise.resolve(c);},
+  assinar:function(){return Promise.resolve();},
+  urlEvid:function(v){return v;},
   posicoes:function(){try{return JSON.parse(localStorage.getItem(LSP)||'{}');}catch(e){return {};}},
   enviarPosicao:function(motoristaId,lat,lng,prec){
     try{var p=DadosLocal.posicoes();p[motoristaId]={lat:lat,lng:lng,prec:prec,em:new Date().toISOString()};localStorage.setItem(LSP,JSON.stringify(p));}catch(e){}
