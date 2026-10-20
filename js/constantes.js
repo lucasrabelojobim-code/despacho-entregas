@@ -35,6 +35,15 @@ var MOT={
   devolvido:['Cliente recusou: pedido duplicado','Estabelecimento fechado','Endereço não localizado','Sem responsável para receber'],
   enviado_errado:['Item diferente do pedido','Código trocado na separação','Quantidade acima do pedido']
 };
+/* frota de exemplo (modo local): placa, tipo, modelo, combustível, tanque (L), km inicial, meta km/L */
+var VEICULOS_EX=[
+  ['OAA1B23','moto','Honda CG 160','Gasolina',14,18200,35],['OAB2C34','moto','Honda CG 160','Gasolina',14,22750,35],
+  ['OAC3D45','moto','Yamaha Fazer 250','Gasolina',20,9400,28],['OAD4E56','moto','Honda Biz 125','Gasolina',5,31200,45],
+  ['PHA1A11','caminhao','VW Delivery 9.170','Diesel',100,142500,6],['PHB2B22','caminhao','Mercedes Accelo 815','Diesel',120,98300,5.5],
+  ['PHC3C33','caminhao','Hyundai HR','Diesel',75,67800,9],
+  ['QZA1D44','carro','Fiat Fiorino','Flex',48,54100,11],['QZB2E55','carro','Fiat Strada','Flex',55,38900,11.5],
+  ['QZC3F66','carro','VW Saveiro','Flex',55,71200,11],['QZD4G77','carro','Renault Kangoo','Flex',50,45600,10],['QZE5H88','carro','Fiat Argo','Flex',48,12800,12.5]
+];
 var EQUIPE=[
   ['João Pereira','Efetivado','','Fiorino','QZB4C12','(92) 99111-2301','joao'],
   ['Marcos Silva','Efetivado','','Van Sprinter','PHL2E45','(92) 99122-4410','marcos'],

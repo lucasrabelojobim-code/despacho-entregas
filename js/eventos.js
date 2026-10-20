@@ -24,6 +24,10 @@ document.addEventListener('click',function(ev){
     case 'do-reset':DB=seed();save();closeModal();renderApp();toast('Dados de exemplo restaurados');break;
     case 'do-clear':DB.entregas=[];DB.ocorrencias=[];DB.seq.ent=1000;DB.seq.oc=0;DB.demo=false;save();closeModal();renderApp();toast('Entregas e ocorrências apagadas');break;
     case 'drv-stats':openDrvStats(id);break;
+    case 'vei-new':openVeicForm(null);break;
+    case 'vei-edit':openVeicForm(n);break;
+    case 'ab-open':openAbastecimento(n);break;
+    case 'abast-novo':UI.drv={screen:'abast',id:null};renderApp();window.scrollTo(0,0);break;
     case 'open-ent':openEntrega(n);break;
     case 'nova-ent':openNovaEntrega();break;
     case 'add-item':{var box=$('#itens');var d=document.createElement('div');d.innerHTML=itemRow();box.appendChild(d.firstChild);break;}
@@ -52,10 +56,15 @@ document.addEventListener('input',function(ev){
   if(t.dataset&&t.dataset.bind){var p=t.dataset.bind.split('.');UI[p[0]][p[1]]=t.value;fillLista();return;}
   if(t.list&&t.name==='codigo'){var p2=DB.catalogo.find(function(x){return x[0]===t.value.trim();});if(p2){var ds=t.closest('.item-row').querySelector('[name=desc]');if(!ds.value)ds.value=p2[1];}}
   if(t.id==='cf-tipo'){$('#cf-emp').hidden=(t.value!=='Terceirizado');}
+  if(t.id==='ab-v')dicaKm();
   if(t.name==='res')syncConf();
 });
 document.addEventListener('change',function(ev){
   var t=ev.target;
+  if((t.id==='ab-od-in'||t.id==='ab-nt-in')&&t.files&&t.files[0]){
+    var od=(t.id==='ab-od-in'),pv=$(od?'#ab-od-prev':'#ab-nt-prev'),lb=$(od?'#ab-od-lbl':'#ab-nt-lbl');
+    readImage(t.files[0]).then(function(u){if(od)UI.fotoOd=u;else UI.fotoNt=u;pv.src=u;pv.hidden=false;lb.textContent='Trocar foto';}).catch(function(){toast('Não foi possível ler a foto. Tente outra.');});
+  }
   if(t.id==='foto-in'&&t.files&&t.files[0]){
     readImage(t.files[0]).then(function(u){UI.foto=u;var p=$('#foto-prev');p.src=u;p.hidden=false;$('#foto-lbl').textContent='Trocar foto';}).catch(function(){toast('Não foi possível ler a foto. Tente outra.');});
   }
@@ -67,6 +76,8 @@ document.addEventListener('submit',function(ev){
   else if(f.id==='f-col')saveColab(f);
   else if(f.id==='f-oc')saveOc(f);
   else if(f.id==='f-conf')finishConf(f);
+  else if(f.id==='f-abast')saveAbast(f);
+  else if(f.id==='f-vei')saveVeic(f);
 });
 document.addEventListener('keydown',function(ev){
   if(ev.key==='Escape'&&!ov.hidden)closeModal();

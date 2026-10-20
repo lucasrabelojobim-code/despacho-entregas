@@ -7,14 +7,14 @@ function renderApp(){
   if(SESSION.role==='admin'){app.innerHTML=adminShell()+rodape();mountAdmin();}
   else{
     app.innerHTML=driverShell()+rodape();
-    if(UI.drv.screen==='confirm')syncConf();else if(usaReal())mrDriver();
+    if(UI.drv.screen==='confirm')syncConf();else if(UI.drv.screen==='abast')dicaKm();else if(usaReal())mrDriver();
   }
 }
 
 var tAtualiza=null;
 function ocupado(){
   var tag=((document.activeElement||{}).tagName||'');
-  return !ov.hidden||UI.drv.screen==='confirm'||/INPUT|TEXTAREA|SELECT/.test(tag);
+  return !ov.hidden||UI.drv.screen==='confirm'||UI.drv.screen==='abast'||/INPUT|TEXTAREA|SELECT/.test(tag);
 }
 function tick(){
   if(!SESSION)return;

@@ -20,6 +20,11 @@ function calc(list){
   s.devPct=pct(s.dev,desp.length);s.errPct=pct(s.err,desp.length);s.probPct=pct(s.prob,desp.length);
   return s;
 }
+/* garante as listas do módulo de combustível em dados antigos (modo local) */
+function garantirCombustivel(d){
+  d.veiculos=d.veiculos||[];d.abastecimentos=d.abastecimentos||[];d.seq=d.seq||{};
+  if(!d.seq.vei)d.seq.vei=d.veiculos.reduce(function(m,v){return v.id>m?v.id:m;},0);
+}
 function pill(st){var s=STATUS[st];return '<span class="pill p-'+s.c+'"><i></i>'+s.l+'</span>';}
 function tagTipo(c){return '<span class="tag '+(c.tipo==='Terceirizado'?'tag-ter':'tag-ef')+'">'+esc(c.tipo)+'</span>';}
 function meterCls(v){return v==null?'':v>=85?'':v>=70?'m-warn':'m-bad';}

@@ -86,5 +86,23 @@ function seed(){
       delete e._oc;
     }
   });
-  return {v:1,demo:true,seedDay:todayKey(),seq:{ent:1000+raw.length,oc:ocSeq,col:colaboradores.length},colaboradores:colaboradores,entregas:raw,ocorrencias:ocs,catalogo:CATALOGO.map(function(x){return x.slice();})};
+  /* frota de exemplo: 4 motos, 3 caminhões e 5 carros, com abastecimentos dos últimos 28 dias */
+  var veiculos=[],abastecimentos=[],abSeq=0;
+  VEICULOS_EX.forEach(function(r,vi){
+    var v={id:vi+1,placa:r[0],tipo:r[1],modelo:r[2],combustivel:r[3],capacidade:r[4],kmInicial:r[5],metaKml:r[6],ativo:true};
+    veiculos.push(v);
+    var km=v.kmInicial,dia=27;
+    for(var k=0;k<7;k++){
+      var dist=Math.round(v.tipo==='moto'?ri(220,380):v.tipo==='caminhao'?ri(450,900):ri(280,620));
+      var kml=v.metaKml*(1+(rnd()-0.5)*0.16);
+      if(k===5&&vi%4===0)kml=v.metaKml*0.68;   /* um consumo ruim de exemplo, para mostrar o alerta */
+      var lit=k===0?Math.round(v.capacidade*0.7*100)/100:Math.round(dist/kml*100)/100;
+      if(k>0)km+=dist;
+      var preco=v.combustivel==='Diesel'?6.05:v.combustivel==='Etanol'?4.29:6.19;
+      var d0=new Date(now.getFullYear(),now.getMonth(),now.getDate()-dia,ri(7,18),ri(0,59));
+      abastecimentos.push({id:1000+(++abSeq),veiculoId:v.id,motoristaId:pick(colaboradores).id,em:d0.toISOString(),km:km,litros:lit,valor:Math.round(lit*preco*100)/100,cheio:true,posto:pick(['Posto Central','Posto Beira Rio','Posto Norte','Auto Posto Aleixo']),fotoOdometro:'exemplo',fotoNota:'exemplo',obs:'',origem:'app'});
+      dia=Math.max(1,dia-ri(3,5));
+    }
+  });
+  return {v:1,demo:true,seedDay:todayKey(),seq:{ent:1000+raw.length,oc:ocSeq,col:colaboradores.length,vei:veiculos.length},colaboradores:colaboradores,entregas:raw,ocorrencias:ocs,catalogo:CATALOGO.map(function(x){return x.slice();}),veiculos:veiculos,abastecimentos:abastecimentos};
 }

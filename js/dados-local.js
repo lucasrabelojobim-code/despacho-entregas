@@ -4,7 +4,7 @@ var LS='despacho-entregas-v1', LSS='despacho-sessao-v1', LSP='despacho-posicoes-
 var DB=null, SESSION=null;
 
 function load(){
-  try{var raw=localStorage.getItem(LS);if(raw){DB=JSON.parse(raw);if(DB&&DB.v===1&&!(DB.demo&&DB.seedDay!==todayKey()))return;}}catch(e){}
+  try{var raw=localStorage.getItem(LS);if(raw){DB=JSON.parse(raw);if(DB&&DB.v===1&&!(DB.demo&&DB.seedDay!==todayKey())){garantirCombustivel(DB);return;}}}catch(e){}
   DB=seed();DadosLocal.salvar();
 }
 function saveSession(){try{if(SESSION&&SESSION.via!=='link')localStorage.setItem(LSS,JSON.stringify(SESSION));else localStorage.removeItem(LSS);}catch(e){}}

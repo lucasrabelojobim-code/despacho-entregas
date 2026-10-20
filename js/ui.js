@@ -1,6 +1,6 @@
 'use strict';
 /* ============ interface: estado ============ */
-var UI={view:'dashboard',periodo:'hoje',mapTipo:'',mapSel:null,f:{q:'',status:'',mot:'',tipo:'',dia:'hoje'},c:{q:'',tipo:''},o:{tipo:'',mt:'',dia:'7d'},drv:{screen:'home',id:null},foto:null,signed:false,loginMsg:'',prefill:'',mapa:(CONFIG.mapaReal!==false&&window.L)?'real':'esq'};
+var UI={view:'dashboard',periodo:'hoje',mapTipo:'',mapSel:null,f:{q:'',status:'',mot:'',tipo:'',dia:'hoje'},c:{q:'',tipo:''},o:{tipo:'',mt:'',dia:'7d'},vei:{q:'',tipo:''},ab:{vei:'',mot:'',dia:'30d',alerta:''},drv:{screen:'home',id:null},foto:null,fotoOd:null,fotoNt:null,signed:false,loginMsg:'',prefill:'',mapa:(CONFIG.mapaReal!==false&&window.L)?'real':'esq'};
 var app=$('#app'),ov=$('#ov'),toastEl=$('#toast'),toastT=null;
 function toast(t){toastEl.textContent=t;toastEl.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){toastEl.hidden=true;},3200);}
 function openModal(html,narrow){ov.innerHTML='<div class="dlg'+(narrow?' narrow':'')+'" role="dialog" aria-modal="true">'+html+'</div>';ov.hidden=false;var f=ov.querySelector('[autofocus]');if(f)f.focus();}

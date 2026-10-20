@@ -1,7 +1,7 @@
 'use strict';
 /* ============ admin: casca ============ */
 function adminShell(){
-  var tabs=[['dashboard','Painel'],['mapa','Mapa'],['entregas','Entregas'],['colaboradores','Colaboradores'],['ocorrencias','Ocorrências']];
+  var tabs=[['dashboard','Painel'],['mapa','Mapa'],['entregas','Entregas'],['colaboradores','Colaboradores'],['ocorrencias','Ocorrências'],['veiculos','Veículos'],['abastecimentos','Abastecimentos']];
   return '<div class="band top"><div class="band-in"><div class="top-row"><div class="brand sm">'+mark()+'<span>Despacho</span></div>'+
   '<nav class="tabs" aria-label="Seções">'+tabs.map(function(t){return '<button class="tab" data-act="nav" data-v="'+t[0]+'"'+(UI.view===t[0]?' aria-current="page"':'')+'>'+t[1]+'</button>';}).join('')+'</nav>'+
   '<div class="top-r">'+(DB.demo?'<span class="pill p-neutral">Dados de exemplo</span>':'')+'<button class="btn btn-sm" data-act="dados">Dados</button><button class="btn btn-sm" data-act="logout">Sair</button></div></div></div></div><main class="main" id="main"></main>';
@@ -12,9 +12,11 @@ function mountAdmin(){
   else if(UI.view==='mapa'){m.innerHTML=viewMapa();if(usaReal())mrAdmin(rotasMapa());}
   else if(UI.view==='entregas'){m.innerHTML=viewEntregas();fillEntregas();}
   else if(UI.view==='colaboradores'){m.innerHTML=viewColabs();fillColabs();}
+  else if(UI.view==='veiculos'){m.innerHTML=viewVeiculos();fillVeiculos();}
+  else if(UI.view==='abastecimentos'){m.innerHTML=viewAbastecimentos();fillAbastecimentos();}
   else{m.innerHTML=viewOcs();fillOcs();}
 }
-function fillLista(){if(UI.view==='entregas')fillEntregas();else if(UI.view==='colaboradores')fillColabs();else if(UI.view==='ocorrencias')fillOcs();}
+function fillLista(){if(UI.view==='entregas')fillEntregas();else if(UI.view==='colaboradores')fillColabs();else if(UI.view==='ocorrencias')fillOcs();else if(UI.view==='veiculos')fillVeiculos();else if(UI.view==='abastecimentos')fillAbastecimentos();}
 
 /* ============ admin: painel ============ */
 function kpi(l,v,s,t){return '<div class="kpi'+(t?' t-'+t:'')+'"><span class="k-l">'+l+'</span><span class="k-v">'+v+'</span><span class="k-s">'+s+'</span></div>';}

@@ -3,7 +3,7 @@
 function driverShell(){
   var c=colab(SESSION.id);if(!c){SESSION=null;return viewLogin();}
   var head='<div class="band top dhead"><div class="band-in"><div class="top-row">'+mark()+'<div><b style="font:600 22px/1 var(--font-display)">Olá, '+esc(c.nome.split(' ')[0])+'</b><div class="row" style="margin-top:4px">'+tagTipo(c)+(c.tipo==='Terceirizado'?'<span class="note">'+esc(c.empresa)+'</span>':'')+(SESSION.via==='link'?'<span class="note">acesso por link</span>':'')+'</div></div><div class="top-r"><button class="btn btn-sm" data-act="logout">Sair</button></div></div></div></div>';
-  return head+(UI.drv.screen==='confirm'?viewConfirm(c):viewDrvHome(c));
+  return head+(UI.drv.screen==='confirm'?viewConfirm(c):UI.drv.screen==='abast'?viewAbast(c):viewDrvHome(c));
 }
 function drvList(c){return DB.entregas.filter(function(e){return e.motoristaId===c.id&&(e.dia===todayKey()||!isConcl(e));}).sort(function(a,b){return a.prazo.localeCompare(b.prazo);});}
 function dCard(e){
@@ -16,7 +16,7 @@ function viewDrvHome(c){
   var pend=done.filter(function(e){return !e.retornoEm;}).length;
   var tot=l.length,pc=tot?Math.round(done.length*100/tot):0;
   var rt=routeOf(c,'driver');STOPNO={};if(rt)rt.stops.forEach(function(x,i){STOPNO[x.id]=i+1;});
-  var h='<div class="dwrap"><section class="dcard"><div class="row" style="justify-content:space-between"><b>Hoje</b><span class="num">'+done.length+' de '+tot+' concluídas</span></div><div class="meter m-ef" role="progressbar" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pc+'%"></i></div></section>'+gpsCard()+driverMapHtml(c,UI.drv.hl);
+  var h='<div class="dwrap"><section class="dcard"><div class="row" style="justify-content:space-between"><b>Hoje</b><span class="num">'+done.length+' de '+tot+' concluídas</span></div><div class="meter m-ef" role="progressbar" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pc+'%"></i></div></section>'+abastCard(c)+gpsCard()+driverMapHtml(c,UI.drv.hl);
   if(rota.length)h+='<div class="dsec">Em rota ('+rota.length+')</div>'+rota.map(dCard).join('');
   if(sep.length){h+='<div class="dsec">Para sair ('+sep.length+')</div>';if(sep.length>1)h+='<button class="btn btn-lg" data-act="drv-saida-all">Saí com todas ('+sep.length+')</button>';h+=sep.map(dCard).join('');}
   if(!rota.length&&!sep.length)h+='<section class="dcard"><b>Nenhuma entrega pendente.</b><span class="muted">Novas entregas aparecem aqui assim que forem separadas.</span></section>';
