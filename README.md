@@ -118,3 +118,11 @@ marca/                logo e ícones da Arcos Jobim
 - **Tempo até a próxima parada:** no mapa do administrador/desenvolvedor, cada motorista mostra "chega em ~N min". A conta usa as ruas (serviço OSRM) a partir do GPS do celular (ou da posição simulada). É uma estimativa e não considera trânsito; sem internet de rotas, usa a linha reta.
 
 Ordem para atualizar um site que já está no ar: rode o `banco/05-empresa-coleta.sql` no Supabase e depois envie os arquivos do site ao GitHub.
+
+## Limpar histórico (só o desenvolvedor)
+
+Em **Desenvolvedor → Limpar histórico** você escolhe um período no calendário (ou o atalho **Tudo**) e marca o que apagar: entregas e coletas (com as ocorrências), abastecimentos, posições de GPS, fotos e assinaturas. Pedidos ainda em aberto são mantidos, a menos que você marque para incluí-los.
+
+Fluxo: **Conferir** (mostra quantos registros serão apagados) → digitar **APAGAR** → o site baixa um backup em CSV (opcional, recomendado) → apaga. Apagar é permanente.
+
+Para funcionar, rode **uma vez** `banco/06-limpar-historico.sql` no Supabase (SQL Editor → Run) antes de publicar os arquivos novos. O banco recusa qualquer usuário que não seja desenvolvedor.

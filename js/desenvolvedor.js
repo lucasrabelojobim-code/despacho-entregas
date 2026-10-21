@@ -9,7 +9,7 @@ function msgErro(e){return (e&&e.message)||String(e);}
 function dtHora(iso){return iso?new Date(iso).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'—';}
 
 function viewDev(){
-  var abas=[['plano','Plano'],['codigos','Códigos'],['usuarios','Usuários'],['empresa','Empresa']];
+  var abas=[['plano','Plano'],['codigos','Códigos'],['usuarios','Usuários'],['empresa','Empresa'],['limpar','Limpar histórico']];
   return '<div class="page-h"><div><h1>Desenvolvedor</h1><p>Área restrita: plano da empresa, códigos de acesso, usuários e local da empresa.</p></div>'+
     '<div class="seg" role="group" aria-label="Seção">'+abas.map(function(a){return '<button data-act="dev-aba" data-p="'+a[0]+'" aria-pressed="'+(UI.dev.aba===a[0])+'">'+a[1]+'</button>';}).join('')+'</div></div>'+
     '<div id="dev-corpo"></div>';
@@ -17,6 +17,7 @@ function viewDev(){
 function fillDev(){
   var el=$('#dev-corpo');if(!el)return;
   var n=++DEV.seq,aba=UI.dev.aba;
+  if(aba==='limpar'){el.innerHTML=viewLimpar();fillLimpar();return;}
   if(aba==='empresa'){el.innerHTML=devEmpresaHtml();if(usaReal())mrEmpresa();return;}
   el.innerHTML='<div class="empty">Carregando…</div>';
   var p=aba==='plano'?Dados.devLicenca().then(devPlanoHtml):

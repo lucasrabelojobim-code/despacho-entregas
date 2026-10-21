@@ -343,3 +343,10 @@ input[type=checkbox]{width:18px;height:18px;min-height:0;padding:0;flex:none}
 .eta-tip{background:var(--accent);color:var(--accent-ink);border:0;font:700 12px var(--font-body);padding:2px 7px;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .eta-tip::before{border-top-color:var(--accent)!important}
 input[type=checkbox]{accent-color:var(--accent)}
+
+/* ---- limpar histórico ---- */
+.chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.chk input{margin-top:3px;flex:none}
+.chk .note{display:block}
+.aviso-bad{border:1px solid var(--bad);background:var(--bad-soft);color:var(--ink);border-radius:8px;padding:10px 12px}
+.aviso-ok{border:1px solid var(--good);background:var(--good-soft);color:var(--ink);border-radius:8px;padding:10px 12px;margin-bottom:8px}

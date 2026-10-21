@@ -22,28 +22,59 @@ function periodoTxt(){
 }
 
 /* ---------- calendário ---------- */
-function histCalHtml(){
-  var h=UI.h,p=h.mes.split('-'),ano=+p[0],mes=+p[1]-1,hoje=todayKey();
-  var dias=new Date(ano,mes+1,0).getDate(),ini=new Date(ano,mes,1).getDay(),cont=h.cont[h.mes]||{},i,d;
-  var s='<div class="cal"><div class="cal-h"><button class="btn btn-sm" type="button" data-act="h-mes" data-id="-1" aria-label="Mês anterior">‹</button><b>'+MESES[mes]+' de '+ano+'</b><button class="btn btn-sm" type="button" data-act="h-mes" data-id="1" aria-label="Próximo mês">›</button></div><div class="cal-g">';
+function histCalHtml(h,pf){
+  h=h||UI.h;pf=pf||'h';
+  var p=h.mes.split('-'),ano=+p[0],mes=+p[1]-1,hoje=todayKey();
+  var dias=new Date(ano,mes+1,0).getDate(),ini=new Date(ano,mes,1).getDay(),cont=(h.cont||{})[h.mes]||{},i,d;
+  var s='<div class="cal"><div class="cal-h"><button class="btn btn-sm" type="button" data-act="'+pf+'-mes" data-id="-1" aria-label="Mês anterior">‹</button><b>'+MESES[mes]+' de '+ano+'</b><button class="btn btn-sm" type="button" data-act="'+pf+'-mes" data-id="1" aria-label="Próximo mês">›</button></div><div class="cal-g">';
   ['D','S','T','Q','Q','S','S'].forEach(function(x){s+='<span class="cal-w">'+x+'</span>';});
   for(i=0;i<ini;i++)s+='<span></span>';
   for(d=1;d<=dias;d++){
     var k=ano+'-'+pad(mes+1)+'-'+pad(d),dentro=k>=h.de&&k<=h.ate,pontas=(k===h.de||k===h.ate);
-    s+='<button type="button" class="cal-d'+(dentro?' in':'')+(pontas?' ext':'')+(k===hoje?' hoje':'')+(cont[k]?' has':'')+'" data-act="h-dia" data-id="'+k+'"'+(k>hoje?' disabled':'')+' aria-pressed="'+dentro+'" title="'+(cont[k]?cont[k]+(cont[k]===1?' pedido':' pedidos'):'sem pedidos')+'">'+d+'</button>';
+    s+='<button type="button" class="cal-d'+(dentro?' in':'')+(pontas?' ext':'')+(k===hoje?' hoje':'')+(cont[k]?' has':'')+'" data-act="'+pf+'-dia" data-id="'+k+'"'+(k>hoje?' disabled':'')+' aria-pressed="'+dentro+'" title="'+(cont[k]?cont[k]+(cont[k]===1?' pedido':' pedidos'):'sem pedidos')+'">'+d+'</button>';
   }
   return s+'</div><div class="cal-leg"><span><i class="cal-pt"></i>dia com pedidos</span></div></div>';
 }
-function histCal(){var el=$('#h-cal');if(el)el.innerHTML=histCalHtml();var t=$('#h-per');if(t)t.textContent=periodoTxt();}
+function histCal(){var el=$('#h-cal');if(el)el.innerHTML=histCalHtml(UI.h,'h');var t=$('#h-per');if(t)t.textContent=periodoTxt();}
+/* atalhos de período (os mesmos no Histórico e em Limpar histórico) */
+function atalhosHtml(pf,comTudo){
+  var l=[['hoje','Hoje'],['ontem','Ontem'],['7d','7 dias'],['30d','30 dias'],['mes','Este mês'],['mesant','Mês passado']];
+  if(comTudo)l.push(['tudo','Tudo']);
+  return l.map(function(a){return '<button type="button" class="btn btn-sm" data-act="'+pf+'-atalho" data-id="'+a[0]+'">'+a[1]+'</button>';}).join('');
+}
+/* cliques do calendário. st = estado {de,ate,mes,pend}; cb(mudouPeriodo, mudouMes). Devolve true se tratou. */
+function calAcao(st,pf,a,id,cb,limite){
+  if(a===pf+'-dia'){
+    if(st.pend){
+      var x=st.pend,y=id;st.de=x<y?x:y;st.ate=x<y?y:x;st.pend=null;
+      if(limite&&difDias(st.de,st.ate)>limite)st.ate=addDias(st.de,limite);
+    }else{st.de=st.ate=id;st.pend=id;}
+    cb(true,false);return true;
+  }
+  if(a===pf+'-mes'){
+    var p=st.mes.split('-'),d=new Date(+p[0],+p[1]-1+(+id),1);
+    st.mes=d.getFullYear()+'-'+pad(d.getMonth()+1);cb(false,true);return true;
+  }
+  if(a===pf+'-atalho'){
+    var hoje=todayKey(),ini=hoje,fim=hoje,dh=new Date();
+    if(id==='ontem'){ini=fim=addDias(hoje,-1);}
+    else if(id==='7d'){ini=addDias(hoje,-6);}
+    else if(id==='30d'){ini=addDias(hoje,-29);}
+    else if(id==='mes'){ini=dayKey(new Date(dh.getFullYear(),dh.getMonth(),1));}
+    else if(id==='mesant'){ini=dayKey(new Date(dh.getFullYear(),dh.getMonth()-1,1));fim=dayKey(new Date(dh.getFullYear(),dh.getMonth(),0));}
+    else if(id==='tudo'){ini='2000-01-01';}
+    st.de=ini;st.ate=fim;st.pend=null;st.mes=fim.slice(0,7);cb(true,true);return true;
+  }
+  return false;
+}
 
 /* ---------- tela ---------- */
 function viewHist(){
   histPadrao();
   var h=UI.h;
-  var atalhos=[['hoje','Hoje'],['ontem','Ontem'],['7d','7 dias'],['30d','30 dias'],['mes','Este mês'],['mesant','Mês passado']];
   return '<div class="page-h"><div><h1>Histórico</h1><p>Escolha um dia ou um período no calendário e veja tudo o que aconteceu.</p></div></div>'+
-  '<div class="hgrid"><section class="panel"><div class="panel-h"><h2>Período</h2></div><div class="panel-b"><div id="h-cal">'+histCalHtml()+'</div>'+
-    '<div class="row" style="margin-top:10px">'+atalhos.map(function(a){return '<button type="button" class="btn btn-sm" data-act="h-atalho" data-id="'+a[0]+'">'+a[1]+'</button>';}).join('')+'</div>'+
+  '<div class="hgrid"><section class="panel"><div class="panel-h"><h2>Período</h2></div><div class="panel-b"><div id="h-cal">'+histCalHtml(UI.h,'h')+'</div>'+
+    '<div class="row" style="margin-top:10px">'+atalhosHtml('h',false)+'</div>'+
     '<p class="note" id="h-per" style="margin-top:8px">'+esc(periodoTxt())+'</p></div></section>'+
   '<section class="panel"><div class="panel-h"><h2>Filtros</h2></div><div class="panel-b" style="display:flex;flex-direction:column;gap:10px">'+
     '<div class="field"><label for="h-op">Tipo</label><select id="h-op" data-bind="h.op">'+opts([['','Entregas e coletas'],['entrega','Só entregas'],['coleta','Só coletas']],h.op)+'</select></div>'+
@@ -71,27 +102,8 @@ function histContagem(){
 /* ---------- cliques ---------- */
 function histAcao(a,t,id){
   var h=UI.h;
-  switch(a){
-    case 'h-dia':
-      if(h.pend){
-        var x=h.pend,y=id;h.de=x<y?x:y;h.ate=x<y?y:x;h.pend=null;
-        if(difDias(h.de,h.ate)>365)h.ate=addDias(h.de,365);
-      }else{h.de=h.ate=id;h.pend=id;}
-      histCal();histCarregar();return true;
-    case 'h-mes':{
-      var p=h.mes.split('-'),d=new Date(+p[0],+p[1]-1+(+id),1);
-      h.mes=d.getFullYear()+'-'+pad(d.getMonth()+1);histCal();histContagem();return true;}
-    case 'h-atalho':{
-      var hoje=todayKey(),ini=hoje,fim=hoje,dh=new Date();
-      if(id==='ontem'){ini=fim=addDias(hoje,-1);}
-      else if(id==='7d'){ini=addDias(hoje,-6);}
-      else if(id==='30d'){ini=addDias(hoje,-29);}
-      else if(id==='mes'){ini=dayKey(new Date(dh.getFullYear(),dh.getMonth(),1));}
-      else if(id==='mesant'){ini=dayKey(new Date(dh.getFullYear(),dh.getMonth()-1,1));fim=dayKey(new Date(dh.getFullYear(),dh.getMonth(),0));}
-      h.de=ini;h.ate=fim;h.pend=null;h.mes=fim.slice(0,7);
-      histCal();histContagem();histCarregar();return true;}
-    case 'h-mais':h.lim+=200;histDesenhar();return true;
-  }
+  if(calAcao(h,'h',a,id,function(per,mes){histCal();if(mes)histContagem();if(per)histCarregar();},365))return true;
+  if(a==='h-mais'){h.lim+=200;histDesenhar();return true;}
   return false;
 }
 

@@ -51,7 +51,7 @@ document.addEventListener('click',function(ev){
     case 'drv-back':UI.drv={screen:'home',id:null};renderApp();break;
     case 'drv-voltei':{var ts2=nowIso();DB.entregas.forEach(function(e){if(e.motoristaId===SESSION.id&&isConcl(e)&&!e.retornoEm)e.retornoEm=ts2;});save();renderApp();toast('Retorno registrado');break;}
     case 'sig-clear':{var cv=$('#sig');if(cv&&sigCtx){var r=cv.getBoundingClientRect();sigCtx.fillStyle='#fff';sigCtx.fillRect(0,0,r.width,r.height);UI.signed=false;}break;}
-    default:if(!histAcao(a,t,id))devAcao(a,t,id);  /* plano e área do desenvolvedor: js/plano.js e js/desenvolvedor.js */
+    default:if(!histAcao(a,t,id)&&!limparAcao(a,t,id))devAcao(a,t,id);  /* plano e área do desenvolvedor: js/plano.js e js/desenvolvedor.js */
   }
 });
 document.addEventListener('input',function(ev){
@@ -60,10 +60,12 @@ document.addEventListener('input',function(ev){
   if(t.list&&t.name==='codigo'){var p2=DB.catalogo.find(function(x){return x[0]===t.value.trim();});if(p2){var ds=t.closest('.item-row').querySelector('[name=desc]');if(!ds.value)ds.value=p2[1];}}
   if(t.id==='cf-tipo'){$('#cf-emp').hidden=(t.value!=='Terceirizado');}
   if(t.id==='ab-v')dicaKm();
+  if(t.id==='l-conf'){var bo=$('#l-ok');if(bo)bo.disabled=(t.value.trim()!=='APAGAR');}
   if(t.name==='res')syncConf();
 });
 document.addEventListener('change',function(ev){
   var t=ev.target;
+  if(t.dataset&&t.dataset.lchk&&SESSION&&SESSION.dev){UI.l[t.dataset.lchk]=t.checked;UI.l.info=null;UI.l.msg='';UI.l.erro='';limpaRes();return;}
   if((t.id==='ab-od-in'||t.id==='ab-nt-in')&&t.files&&t.files[0]){
     var od=(t.id==='ab-od-in'),pv=$(od?'#ab-od-prev':'#ab-nt-prev'),lb=$(od?'#ab-od-lbl':'#ab-nt-lbl');
     readImage(t.files[0]).then(function(u){if(od)UI.fotoOd=u;else UI.fotoNt=u;pv.src=u;pv.hidden=false;lb.textContent='Trocar foto';}).catch(function(){toast('Não foi possível ler a foto. Tente outra.');});
@@ -88,6 +90,7 @@ document.addEventListener('submit',function(ev){
 document.addEventListener('keydown',function(ev){
   if(ev.key==='Escape'&&!ov.hidden)closeModal();
   var t=ev.target;if(ev.key==='Enter'&&t.id==='em-end'){ev.preventDefault();mrBuscarEmpresa();return;}
+  if(ev.key==='Enter'&&t.id==='l-conf'){ev.preventDefault();return;}
   if((ev.key==='Enter'||ev.key===' ')&&t.getAttribute&&t.getAttribute('role')==='button'&&t.dataset.act){ev.preventDefault();t.click();}
 });
 /* assinatura */

@@ -69,6 +69,11 @@ var DadosOnline=(function(){
     return {liberado:d.liberado!==false,motivo:d.motivo||'ok',plano:d.plano||'full',dev:!!d.dev,papel:d.papel||'',
       testeDias:d.teste_dias||3,ate:(seg==null?null:Date.now()+Number(seg)*1000)};
   }
+  /* parâmetros das funções de limpeza: dias e horários no fuso do navegador */
+  function parLimpeza(de,ate,o){
+    return {p_de:de,p_ate:ate,p_ini:new Date(de+'T00:00:00').toISOString(),p_fim:new Date(ate+'T23:59:59.999').toISOString(),
+      p_entregas:!!o.ent,p_abast:!!o.ab,p_gps:!!o.gps,p_abertos:!!o.abertos};
+  }
   function maxNum(list,f){return list.reduce(function(m,x){var n=f(x);return n>m?n:m;},0);}
 
   function buscar(){
@@ -298,6 +303,25 @@ var DadosOnline=(function(){
     /* só o desenvolvedor: local da empresa no mapa */
     devLocalEmpresa:function(lat,lng,endereco){
       return rpc('dev_definir_local_empresa',{p_lat:lat,p_lng:lng,p_endereco:endereco||''}).then(function(){EMPRESA={lat:lat,lng:lng,endereco:endereco||''};});
+    },
+    /* ===== limpar histórico (só o desenvolvedor; o banco confere de novo) ===== */
+    devContarLimpeza:function(de,ate,o){return rpc('dev_contar_limpeza',parLimpeza(de,ate,o));},
+    devLimpar:function(de,ate,o){return rpc('dev_limpar_historico',parLimpeza(de,ate,o));},
+    /* caminhos dos arquivos (fotos/assinaturas) dos registros que serão apagados */
+    caminhosArquivos:function(dados,o){
+      var ps=[];
+      if(o.ent)dados.entregas.forEach(function(e){if(!o.abertos&&(e.status==='separado'||e.status==='em_rota'))return;ps.push(caminho(e.foto),caminho(e.assinatura));});
+      if(o.ab)dados.abastecimentos.forEach(function(a){ps.push(caminho(a.fotoOdometro),caminho(a.fotoNota));});
+      return ps.filter(function(p,i,l){return p&&l.indexOf(p)===i;});
+    },
+    devApagarArquivos:function(paths){
+      var r={ok:0,falhou:0},blocos=[],i;
+      for(i=0;i<paths.length;i+=100)blocos.push(paths.slice(i,i+100));
+      return blocos.reduce(function(p,b){
+        return p.then(function(){return cli().storage.from('evidencias').remove(b);}).then(function(x){
+          if(x&&x.error)r.falhou+=b.length;else r.ok+=((x&&x.data)?x.data.length:b.length);
+        },function(){r.falhou+=b.length;});
+      },Promise.resolve()).then(function(){return r;});
     },
     assinar:assinar,
     urlEvid:function(v){var p=caminho(v);return p===null?v:(urls[p]||null);},
