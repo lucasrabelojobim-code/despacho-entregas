@@ -93,6 +93,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 input,select,textarea{width:100%;min-height:40px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
 textarea{min-height:72px;resize:vertical}
 input[type=file]{padding:0;border:0}
+input[type=checkbox]{width:18px;height:18px;min-height:0;padding:0;flex:none}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field>label,.lbl{font-size:12px;font-weight:600;color:var(--ink-2)}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
