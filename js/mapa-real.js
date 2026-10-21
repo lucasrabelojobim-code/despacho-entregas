@@ -60,18 +60,24 @@ function avisoMapa(m,txt){
   c.onAdd=function(){var d=L.DomUtil.create('div','');d.style.cssText='background:#fff;color:#7A4B00;border:1px solid #E0B050;border-radius:6px;padding:4px 8px;font:12px sans-serif;max-width:260px;margin:0 0 24px 6px';d.textContent=txt;return d;};
   c.addTo(m);
 }
-function desenhaRota(m,dono,pts,paradas,cor,op,nome){
-  var reta=L.polyline(pts,{color:cor,weight:4,opacity:op*0.8,dashArray:'8 8'}).addTo(m);
+function desenhaRota(m,dono,pts,paradas,cor,op,nome,quieto){
+  /* pts[0] = ponto de partida (posição do entregador); o resto são as paradas, na ordem */
+  var g=L.layerGroup().addTo(m);
+  if(dono==='drv'&&MR.g_drv){try{m.removeLayer(MR.g_drv);}catch(e){}}
+  MR['g_'+dono]=g;
+  var reta=L.polyline(pts,{color:cor,weight:4,opacity:op*0.8,dashArray:'8 8'}).addTo(g);
   var sem=paradas.filter(function(e){return !temLocal(e);});
-  if(sem.length&&op>=1)avisoMapa(m,'Rota pelas ruas sem '+sem.map(function(e){return '#'+e.id;}).join(', ')+' (sem local no mapa). Abra a entrega e use "Localizar no mapa".');
+  if(sem.length&&op>=1&&!quieto)avisoMapa(m,'Rota pelas ruas sem '+sem.map(function(e){return '#'+e.id;}).join(', ')+' (sem local no mapa). Abra a entrega e use "Localizar no mapa".');
   var com=paradas.filter(temLocal);
   if(!com.length)return;
-  var ptsReal=[pts[0]].concat(com.map(llOf));
+  /* a partida é arredondada (~100 m) para não pedir uma rota nova a cada passo do GPS */
+  var o3=[+pts[0][0].toFixed(3),+pts[0][1].toFixed(3)];
+  var ptsReal=[o3].concat(com.map(llOf));
   rotaPorRuas(ptsReal,function(rt){
-    if(MR[dono]!==m)return;
-    if(!rt){if(op>=1)avisoMapa(m,'Não consegui traçar pelas ruas agora. Mostrando linha reta.');return;}
-    try{m.removeLayer(reta);}catch(e){}
-    L.polyline(rt.pts,{color:cor,weight:5,opacity:op*0.85,lineJoin:'round'}).addTo(m).bindTooltip((nome?nome+': ':'')+fmtRota(rt),{sticky:true});
+    if(MR[dono]!==m||MR['g_'+dono]!==g)return;
+    if(!rt){if(op>=1&&!quieto)avisoMapa(m,'Não consegui traçar pelas ruas agora. Mostrando linha reta.');return;}
+    try{g.removeLayer(reta);}catch(e){}
+    L.polyline([pts[0]].concat(rt.pts),{color:cor,weight:5,opacity:op*0.85,lineJoin:'round'}).addTo(g).bindTooltip((nome?nome+': ':'')+fmtRota(rt),{sticky:true});
   });
 }
 /* entregas antigas sem local real: o administrador tenta achar o endereço e grava o local */
@@ -179,7 +185,8 @@ function mrAdmin(rs){
   L.marker(emp,{icon:icone('<div class="mk-emp">E</div>','',26),title:'Empresa'}).addTo(m).bindPopup('<b>Empresa</b><br>Ponto de saída'+(EMPRESA&&EMPRESA.endereco?'<br>'+esc(EMPRESA.endereco):'')+(empresaDefinida()?'':'<br><span style="color:#B7791F">Local de exemplo.'+(SESSION&&SESSION.dev?' Defina o local em Desenvolvedor &gt; Empresa.':' Peça ao desenvolvedor para definir o local da empresa.')+'</span>'));
   rs.forEach(function(r){
     var cor=corHex(r.c),dim=UI.mapSel&&UI.mapSel!==r.c.id,op=dim?0.25:1;
-    var pts=[emp].concat(r.stops.map(llOf));
+    var g0=gp[r.c.id],vivo0=g0&&ageMin(g0.em)<=10,orig=vivo0?[g0.lat,g0.lng]:toLL(r.pos);
+    var pts=[orig].concat(r.stops.map(llOf));   /* a rota sai de onde o entregador está agora */
     desenhaRota(m,'adm',pts,r.stops,cor,op,r.c.nome);
     r.stops.forEach(function(e,i){
       var done=isConcl(e),p=llOf(e);b.push(p);
@@ -206,7 +213,9 @@ function mrDriver(){
   MR.drv=m;
   L.marker(emp,{icon:icone('<div class="mk-emp">E</div>','',26)}).addTo(m).bindPopup('<b>Empresa</b>');
   var cor=r.color?corHex(c):'#0B6BB8';
-  desenhaRota(m,'drv',[emp].concat(r.stops.map(llOf)),r.stops,cor,1,'');
+  var vp0=GPS.pos?[GPS.pos.lat,GPS.pos.lng]:toLL(r.pos);
+  MR.origDrv=vp0;MR.corDrv=cor;
+  desenhaRota(m,'drv',[vp0].concat(r.stops.map(llOf)),r.stops,cor,1,'');
   r.stops.forEach(function(e,i){
     var p=llOf(e);b.push(p);
     var mk=L.marker(p,{icon:icone('<div class="mk-stop'+(isConcl(e)?' done':'')+(ehColeta(e)?' col':'')+(UI.drv.hl===e.id?' hl':'')+'" style="--c:'+cor+'">'+(i+1)+'</div>','',24)}).addTo(m);
@@ -218,7 +227,17 @@ function mrDriver(){
   MR.voce=L.marker(vp,{icon:icone('<div class="mk-drv" style="--c:'+cor+'">Eu</div>','',34),zIndexOffset:1000}).addTo(m);
   m.fitBounds(b,{padding:[24,24],maxZoom:16});
 }
-function mrAtualizaVoce(){if(MR.voce&&GPS.pos)MR.voce.setLatLng([GPS.pos.lat,GPS.pos.lng]);}
+function mrAtualizaVoce(){
+  if(!(MR.voce&&GPS.pos))return;
+  var vp=[GPS.pos.lat,GPS.pos.lng];
+  MR.voce.setLatLng(vp);
+  /* a rota acompanha o motorista: redesenha quando ele andou mais de ~80 m (no máximo a cada 8 s) */
+  if(MR.drv&&MR.origDrv&&kmReta(MR.origDrv,vp)>0.08&&Date.now()-(MR.ultRota||0)>8000){
+    var c=colab(SESSION.id),r=c&&routeOf(c,'driver');if(!r)return;
+    MR.ultRota=Date.now();MR.origDrv=vp;
+    desenhaRota(MR.drv,'drv',[vp].concat(r.stops.map(llOf)),r.stops,MR.corDrv||'#0B6BB8',1,'',true);
+  }
+}
 
 /* ---- escolher o local da entrega (formulário Nova entrega) ---- */
 function mrPick(){
