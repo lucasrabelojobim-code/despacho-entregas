@@ -51,11 +51,21 @@ function rotaPorRuas(pts,cb){
 function fmtRota(rt){return rt.km.toFixed(1).replace('.',',')+' km · cerca de '+(rt.min<60?rt.min+' min':Math.floor(rt.min/60)+'h'+pad(rt.min%60));}
 /* desenha a rota: linha reta tracejada na hora e, quando o trajeto pelas ruas chega, troca por ele.
    Só usa as ruas quando todas as paradas têm local real; senão, não finge um caminho. */
+function avisoMapa(m,txt){
+  var c=L.control({position:'bottomleft'});
+  c.onAdd=function(){var d=L.DomUtil.create('div','');d.style.cssText='background:#fff;color:#7A4B00;border:1px solid #E0B050;border-radius:6px;padding:4px 8px;font:12px sans-serif;max-width:260px;margin:0 0 24px 6px';d.textContent=txt;return d;};
+  c.addTo(m);
+}
 function desenhaRota(m,dono,pts,paradas,cor,op,nome){
   var reta=L.polyline(pts,{color:cor,weight:4,opacity:op*0.8,dashArray:'8 8'}).addTo(m);
-  if(!paradas.every(temLocal))return;
+  var sem=paradas.filter(function(e){return !temLocal(e);});
+  if(sem.length){
+    if(op>=1)avisoMapa(m,'Linha reta: sem local no mapa em '+sem.map(function(e){return '#'+e.id;}).join(', ')+'. Edite a entrega e use "Localizar pelo endereço".');
+    return;
+  }
   rotaPorRuas(pts,function(rt){
-    if(!rt||MR[dono]!==m)return;
+    if(MR[dono]!==m)return;
+    if(!rt){if(op>=1)avisoMapa(m,'Não consegui traçar pelas ruas agora. Mostrando linha reta.');return;}
     try{m.removeLayer(reta);}catch(e){}
     L.polyline(rt.pts,{color:cor,weight:5,opacity:op*0.85,lineJoin:'round'}).addTo(m).bindTooltip((nome?nome+': ':'')+fmtRota(rt),{sticky:true});
   });
