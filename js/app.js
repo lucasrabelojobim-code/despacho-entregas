@@ -4,9 +4,11 @@ var Dados=(CONFIG.supabaseUrl&&CONFIG.supabaseKey&&window.supabase)?DadosOnline:
 
 function renderApp(){
   if(!SESSION){app.innerHTML=viewLogin()+rodape();return;}
-  if(SESSION.role==='admin'){app.innerHTML=adminShell()+rodape();mountAdmin();}
+  /* plano vencido, empresa bloqueada ou usuário bloqueado: só a tela de bloqueio */
+  if(LIC&&LIC.liberado===false){closeModal();gpsDesligar();app.innerHTML=viewBloqueio()+rodape();return;}
+  if(SESSION.role==='admin'){app.innerHTML=bannerPlano()+adminShell()+rodape();mountAdmin();}
   else{
-    app.innerHTML=driverShell()+rodape();
+    app.innerHTML=bannerPlano()+driverShell()+rodape();
     if(UI.drv.screen==='confirm')syncConf();else if(UI.drv.screen==='abast')dicaKm();else if(usaReal())mrDriver();
   }
 }
@@ -19,10 +21,17 @@ function ocupado(){
 function tick(){
   if(!SESSION)return;
   if(Dados.modo==='online'){
-    Dados.atualizar().then(function(mudou){
-      if(ocupado())return;
-      if(mudou||(SESSION.role==='admin'&&UI.view==='mapa'))renderApp();
-    });
+    /* confere o plano a cada ciclo: se vencer ou for bloqueado, a tela de bloqueio entra sozinha */
+    Dados.statusAcesso().then(function(st){
+      var estava=!LIC||LIC.liberado!==false;
+      LIC=st;
+      if(st.liberado===false){if(estava)renderApp();return null;}
+      if(!estava)return Dados.carregar().then(renderApp);
+      return Dados.atualizar().then(function(mudou){
+        if(ocupado())return;
+        if(mudou||(SESSION.role==='admin'&&UI.view==='mapa'))renderApp();
+      });
+    }).catch(function(){});
   }else if(SESSION.role==='admin'&&UI.view==='mapa'&&!ocupado()){mountAdmin();}
 }
 function iniciarAtualizacao(){
@@ -47,7 +56,11 @@ function boot(){
       if(c&&c.ativo!==false){SESSION={role:'driver',id:c.id,via:'link'};UI.drv={screen:'home',id:null};}
       else{SESSION=null;UI.loginMsg='Link inválido ou desativado. Entre com usuário e senha.';}
     }
-    return (Dados.modo==='local'||SESSION)?Dados.carregar():null;
+    if(!(Dados.modo==='local'||SESSION))return null;
+    return Dados.statusAcesso().then(function(st){
+      LIC=st;
+      return st.liberado===false?null:Dados.carregar();
+    });
   }).then(function(){
     renderApp();iniciarAtualizacao();
   }).catch(function(err){

@@ -51,6 +51,7 @@ document.addEventListener('click',function(ev){
     case 'drv-back':UI.drv={screen:'home',id:null};renderApp();break;
     case 'drv-voltei':{var ts2=nowIso();DB.entregas.forEach(function(e){if(e.motoristaId===SESSION.id&&isConcl(e)&&!e.retornoEm)e.retornoEm=ts2;});save();renderApp();toast('Retorno registrado');break;}
     case 'sig-clear':{var cv=$('#sig');if(cv&&sigCtx){var r=cv.getBoundingClientRect();sigCtx.fillStyle='#fff';sigCtx.fillRect(0,0,r.width,r.height);UI.signed=false;}break;}
+    default:devAcao(a,t,id);  /* plano e área do desenvolvedor: js/plano.js e js/desenvolvedor.js */
   }
 });
 document.addEventListener('input',function(ev){
@@ -81,6 +82,8 @@ document.addEventListener('submit',function(ev){
   else if(f.id==='f-conf')finishConf(f);
   else if(f.id==='f-abast')saveAbast(f);
   else if(f.id==='f-vei')saveVeic(f);
+  else if(f.id==='f-codigo')enviarCodigo(f);
+  else if(f.id.indexOf('f-dev-')===0&&SESSION&&SESSION.dev)devEnvio(f);
 });
 document.addEventListener('keydown',function(ev){
   if(ev.key==='Escape'&&!ov.hidden)closeModal();

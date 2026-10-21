@@ -29,6 +29,7 @@ var DadosLocal={
   sair:function(){return Promise.resolve();},
   atualizar:function(){return Promise.resolve(false);},
   criarAcesso:function(c){return Promise.resolve(c);},
+  statusAcesso:function(){return Promise.resolve({liberado:true,motivo:'ok',plano:'full',dev:false,local:true});},
   assinar:function(){return Promise.resolve();},
   urlEvid:function(v){return v;},
   posicoes:function(){try{return JSON.parse(localStorage.getItem(LSP)||'{}');}catch(e){return {};}},

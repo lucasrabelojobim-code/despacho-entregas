@@ -62,6 +62,26 @@ Depois disso, o login é o usuário e a senha reais:
 - O administrador vê a posição na aba **Mapa** (marcador sólido = GPS; claro = posição simulada).
 - Rastrear a posição de pessoas é dado pessoal (LGPD): combine a regra e o aviso com o cliente e com os motoristas antes de usar.
 
+## Desenvolvedor e planos (teste grátis / Full)
+
+Existe um usuário **desenvolvedor**, acima do administrador. Só o dono do sistema tem esse acesso. Ele vê a aba **Desenvolvedor** e controla tudo: plano da empresa, códigos de acesso e todos os usuários (criar, trocar senha, bloquear, mudar o papel, excluir), inclusive o administrador. O administrador não vê essa aba nem o perfil do desenvolvedor, e não consegue alterá-lo.
+
+| Plano | Duração | Como libera |
+|-------|---------|-------------|
+| **Teste grátis** | 3 dias, contados a partir do primeiro login de qualquer usuário da empresa | Sem código |
+| **Full** | Sem prazo | Código de acesso (uso único), gerado pelo desenvolvedor |
+
+Plano vencido ou empresa bloqueada: o site mostra só a tela de bloqueio e o **banco recusa os dados** (a regra fica no Supabase, não só na tela). O plano vale para a empresa inteira. O desenvolvedor nunca é bloqueado.
+
+Como ligar (no SQL Editor do Supabase, nesta ordem):
+
+1. `banco/02-planos-desenvolvedor.sql`: cria as tabelas e as regras. Não bloqueia ninguém.
+2. Crie o usuário desenvolvedor em **Authentication > Users** e rode `banco/03-criar-desenvolvedor.sql` (troque o e-mail de exemplo pelo seu).
+3. Entre no site com o e-mail completo no campo "Usuário" e confira a aba **Desenvolvedor**.
+4. Só então rode `banco/04-ativar-bloqueio.sql` para bloquear a empresa. Para liberar: aba Desenvolvedor > Códigos (gerar código Full) ou Plano (teste grátis / liberar Full).
+
+> Outros desenvolvedores só podem ser criados pelo SQL Editor (arquivo 03), nunca pelo site.
+
 ## Estrutura
 
 ```
@@ -75,8 +95,11 @@ js/mapa.js            mapa esquemático
 js/mapa-real.js       mapa OpenStreetMap + GPS
 js/telas-admin.js     telas do administrador
 js/telas-motorista.js telas do motorista
+js/plano.js           plano da empresa: tela de bloqueio, aviso e código
+js/desenvolvedor.js   aba Desenvolvedor (plano, códigos, usuários)
 js/vendor/            Leaflet e cliente do Supabase
 banco/schema.sql      tabelas e regras de segurança
+banco/02-...-04-...   desenvolvedor, planos e bloqueio (rodar nesta ordem)
 marca/                logo e ícones da Arcos Jobim
 ```
 

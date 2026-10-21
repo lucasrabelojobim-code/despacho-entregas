@@ -31,13 +31,18 @@ function doLogin(u,p){
   Dados.entrar(u,p).then(function(r){
     if(r.erro){UI.loginMsg=r.erro;renderApp();return null;}
     SESSION=r.sessao;
-    return Dados.carregar().then(function(){
+    /* plano vencido ou bloqueado: não carrega os dados, o app mostra a tela de bloqueio */
+    return Dados.statusAcesso().then(function(st){
+      LIC=st;
+      return st.liberado===false?null:Dados.carregar();
+    }).then(function(){
       UI.loginMsg='';UI.drv={screen:'home',id:null};UI.view='dashboard';saveSession();renderApp();window.scrollTo(0,0);
     });
-  }).catch(function(e){SESSION=null;UI.loginMsg='Erro ao entrar: '+((e&&e.message)||e);renderApp();});
+  }).catch(function(e){SESSION=null;LIC=null;UI.loginMsg='Erro ao entrar: '+((e&&e.message)||e);renderApp();});
 }
 function logout(){
   gpsDesligar();
+  LIC=null;
   var fim=Dados.sair();
   SESSION=null;saveSession();
   try{if(location.hash)history.replaceState(null,'',location.pathname+location.search);}catch(e){}

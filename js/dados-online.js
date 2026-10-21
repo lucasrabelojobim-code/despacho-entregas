@@ -37,12 +37,32 @@ var DadosOnline=(function(){
   function erro(e){return (e&&e.message)||String(e);}
   function falhou(r){if(r&&r.error)throw r.error;return r;}
 
+  /* o desenvolvedor entra como administrador (tem tudo dele) com a marca dev:true, que libera a aba "Desenvolvedor" */
   function perfilDe(uid){
     return cli().from('perfis').select('papel,colaborador_id').eq('auth_id',uid).maybeSingle().then(function(r){
       falhou(r);
       if(!r.data)return null;
+      if(r.data.papel==='desenvolvedor')return {role:'admin',dev:true};
       return r.data.papel==='admin'?{role:'admin'}:{role:'driver',id:r.data.colaborador_id,via:'login'};
     });
+  }
+  /* chamada de função do banco (RPC) que devolve o resultado ou lança o erro */
+  function rpc(nome,args){return cli().rpc(nome,args||{}).then(function(r){falhou(r);return r.data;});}
+  /* cria um login novo sem derrubar a sessão de quem está logado */
+  function novoLogin(email,senha){
+    var tmp=window.supabase.createClient(CONFIG.supabaseUrl,CONFIG.supabaseKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:'despacho-tmp'}});
+    return tmp.auth.signUp({email:email,password:senha}).then(function(r){
+      if(r.error)throw r.error;
+      if(!r.data.user)throw new Error('o Supabase não devolveu o usuário (confirmação de e-mail ligada?)');
+      return r.data.user.id;
+    });
+  }
+  /* situação do plano da empresa para o usuário logado (veja status_acesso no banco) */
+  function lerStatus(d){
+    d=d||{};
+    var seg=d.segundos_restantes;
+    return {liberado:d.liberado!==false,motivo:d.motivo||'ok',plano:d.plano||'full',dev:!!d.dev,papel:d.papel||'',
+      testeDias:d.teste_dias||3,ate:(seg==null?null:Date.now()+Number(seg)*1000)};
   }
   function maxNum(list,f){return list.reduce(function(m,x){var n=f(x);return n>m?n:m;},0);}
 
@@ -209,6 +229,34 @@ var DadosOnline=(function(){
           return cli().from('perfis').insert({auth_id:c.authId,papel:'motorista',colaborador_id:c.id});
         }).then(falhou).then(function(){return c;});
       });
+    },
+    /* ===== plano da empresa (teste grátis / Full) ===== */
+    statusAcesso:function(){
+      return cli().rpc('status_acesso').then(function(r){
+        if(r.error){
+          /* banco ainda sem os planos (arquivo 02 não rodado): nada a bloquear */
+          if(r.error.code==='PGRST202'||/could not find the function|schema cache/i.test(r.error.message||''))return {liberado:true,semPlanos:true,motivo:'ok',plano:'full',dev:false};
+          throw r.error;
+        }
+        return lerStatus(r.data);
+      });
+    },
+    resgatarCodigo:function(codigo){return rpc('resgatar_codigo',{p_codigo:codigo}).then(function(d){return d||{ok:false,erro:'Sem resposta do banco.'};});},
+    /* ===== só o desenvolvedor (o banco confere de novo em cada chamada) ===== */
+    devLicenca:function(){return cli().from('licenca').select('*').eq('id',1).maybeSingle().then(function(r){falhou(r);return r.data;});},
+    devCodigos:function(){return cli().from('codigos_acesso').select('id,nota,criado_em,usado_em,cancelado_em').order('id',{ascending:false}).then(function(r){falhou(r);return r.data||[];});},
+    devUsuarios:function(){return rpc('dev_listar_usuarios').then(function(d){return d||[];});},
+    devPlano:function(plano,dias,agora){return rpc('dev_definir_plano',{p_plano:plano,p_dias:dias||3,p_iniciar_agora:!!agora});},
+    devEstender:function(dias){return rpc('dev_estender_teste',{p_dias:dias});},
+    devGerarCodigo:function(nota){return rpc('dev_gerar_codigo',{p_nota:nota||''});},
+    devCancelarCodigo:function(id){return rpc('dev_cancelar_codigo',{p_id:id});},
+    devSenha:function(authId,senha){return rpc('dev_definir_senha',{p_auth_id:authId,p_senha:senha});},
+    devBloquear:function(authId,bloquear){return rpc('dev_bloquear_usuario',{p_auth_id:authId,p_bloquear:!!bloquear});},
+    devPapel:function(authId,papel,colaboradorId){return rpc('dev_definir_papel',{p_auth_id:authId,p_papel:papel,p_colaborador:colaboradorId||null});},
+    devExcluir:function(authId,apagarCadastro){return rpc('dev_excluir_usuario',{p_auth_id:authId,p_apagar_cadastro:!!apagarCadastro});},
+    devCriarAdmin:function(usuario,senha){
+      var email=usuario.indexOf('@')>0?usuario:usuario.toLowerCase()+'@'+CONFIG.dominioLogin;
+      return novoLogin(email,senha).then(function(id){return cli().from('perfis').insert({auth_id:id,papel:'admin'});}).then(falhou);
     },
     assinar:assinar,
     urlEvid:function(v){var p=caminho(v);return p===null?v:(urls[p]||null);},
