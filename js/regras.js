@@ -25,6 +25,12 @@ function garantirCombustivel(d){
   d.veiculos=d.veiculos||[];d.abastecimentos=d.abastecimentos||[];d.seq=d.seq||{};
   if(!d.seq.vei)d.seq.vei=d.veiculos.reduce(function(m,v){return v.id>m?v.id:m;},0);
 }
-function pill(st){var s=STATUS[st];return '<span class="pill p-'+s.c+'"><i></i>'+s.l+'</span>';}
+/* entrega ou coleta: o fluxo é o mesmo, muda o nome */
+var COL_LBL={separado:'Agendada',em_rota:'Em rota',entregue:'Coletada',entregue_problema:'Coletada com problema',devolvido:'Não coletada',enviado_errado:'Coleta errada'};
+function opDe(e){return e&&e.tipo==='coleta'?'coleta':'entrega';}
+function ehColeta(e){return opDe(e)==='coleta';}
+function stL(e){return ehColeta(e)?(COL_LBL[e.status]||STATUS[e.status].l):STATUS[e.status].l;}
+function tagOp(e){return ehColeta(e)?'<span class="tag tag-col">Coleta</span>':'<span class="tag tag-ent">Entrega</span>';}
+function pill(st,tipo){var s=STATUS[st];return '<span class="pill p-'+s.c+'"><i></i>'+stL({status:st,tipo:tipo})+'</span>';}
 function tagTipo(c){return '<span class="tag '+(c.tipo==='Terceirizado'?'tag-ter':'tag-ef')+'">'+esc(c.tipo)+'</span>';}
 function meterCls(v){return v==null?'':v>=85?'':v>=70?'m-warn':'m-bad';}

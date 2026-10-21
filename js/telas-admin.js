@@ -1,7 +1,7 @@
 'use strict';
 /* ============ admin: casca ============ */
 function adminShell(){
-  var tabs=[['dashboard','Painel'],['mapa','Mapa'],['entregas','Entregas'],['colaboradores','Colaboradores'],['ocorrencias','Ocorrências'],['veiculos','Veículos'],['abastecimentos','Abastecimentos']];
+  var tabs=[['dashboard','Painel'],['mapa','Mapa'],['entregas','Entregas'],['colaboradores','Colaboradores'],['ocorrencias','Ocorrências'],['veiculos','Veículos'],['abastecimentos','Abastecimentos'],['historico','Histórico']];
   if(SESSION.dev&&Dados.modo==='online')tabs.push(['desenvolvedor','Desenvolvedor']);
   return '<div class="band top"><div class="band-in"><div class="top-row"><div class="brand sm">'+mark()+'<span>Despacho</span></div>'+
   '<nav class="tabs" aria-label="Seções">'+tabs.map(function(t){return '<button class="tab" data-act="nav" data-v="'+t[0]+'"'+(UI.view===t[0]?' aria-current="page"':'')+'>'+t[1]+'</button>';}).join('')+'</nav>'+
@@ -12,14 +12,15 @@ function mountAdmin(){
   if(UI.view==='desenvolvedor'&&!(SESSION.dev&&Dados.modo==='online'))UI.view='dashboard';
   if(UI.view==='desenvolvedor'){m.innerHTML=viewDev();fillDev();}
   else if(UI.view==='dashboard')m.innerHTML=viewDashboard();
-  else if(UI.view==='mapa'){m.innerHTML=viewMapa();if(usaReal())mrAdmin(rotasMapa());}
+  else if(UI.view==='mapa'){m.innerHTML=viewMapa();var rsm=rotasMapa();if(usaReal())mrAdmin(rsm);mrEtas(rsm);}
   else if(UI.view==='entregas'){m.innerHTML=viewEntregas();fillEntregas();}
   else if(UI.view==='colaboradores'){m.innerHTML=viewColabs();fillColabs();}
   else if(UI.view==='veiculos'){m.innerHTML=viewVeiculos();fillVeiculos();}
   else if(UI.view==='abastecimentos'){m.innerHTML=viewAbastecimentos();fillAbastecimentos();}
+  else if(UI.view==='historico'){m.innerHTML=viewHist();histIniciar();}
   else{m.innerHTML=viewOcs();fillOcs();}
 }
-function fillLista(){if(UI.view==='entregas')fillEntregas();else if(UI.view==='colaboradores')fillColabs();else if(UI.view==='ocorrencias')fillOcs();else if(UI.view==='veiculos')fillVeiculos();else if(UI.view==='abastecimentos')fillAbastecimentos();}
+function fillLista(){if(UI.view==='entregas')fillEntregas();else if(UI.view==='colaboradores')fillColabs();else if(UI.view==='ocorrencias')fillOcs();else if(UI.view==='veiculos')fillVeiculos();else if(UI.view==='abastecimentos')fillAbastecimentos();else if(UI.view==='historico')histDesenhar();}
 
 /* ============ admin: painel ============ */
 function kpi(l,v,s,t){return '<div class="kpi'+(t?' t-'+t:'')+'"><span class="k-l">'+l+'</span><span class="k-v">'+v+'</span><span class="k-s">'+s+'</span></div>';}
@@ -36,9 +37,10 @@ function viewDashboard(){
   var rows=DB.colaboradores.map(function(c){return {c:c,s:calc(list.filter(function(e){return e.motoristaId===c.id;}))};}).filter(function(r){return r.s.total>0;}).sort(function(a,b){return b.s.total-a.s.total;});
   var h='<div class="page-h"><div><h1>Painel</h1><p>'+(UI.periodo==='hoje'?fmtLong(new Date()):'Últimos 7 dias')+'</p></div><div class="row">'+
     '<div class="seg" role="group" aria-label="Período"><button data-act="periodo" data-p="hoje" aria-pressed="'+(UI.periodo==='hoje')+'">Hoje</button><button data-act="periodo" data-p="7d" aria-pressed="'+(UI.periodo==='7d')+'">7 dias</button></div>'+
-    '<button class="btn btn-primary" data-act="nova-ent">Nova entrega</button></div></div>';
+    '<button class="btn btn-primary" data-act="nova-ent">Nova entrega ou coleta</button></div></div>';
+  var nCol=list.filter(ehColeta).length;
   h+='<div class="kpis">'+
-    kpi('Entregas',s.total,s.sep+' separadas, '+s.desp+' despachadas')+
+    kpi(nCol?'Entregas e coletas':'Entregas',s.total,s.sep+' separadas, '+s.desp+' despachadas'+(nCol?' · '+nCol+(nCol===1?' coleta':' coletas'):''))+
     kpi('Na rua',s.emRota,rua.length+(rua.length===1?' motorista fora':' motoristas fora'),'acc')+
     kpi('Entregues',s.ok+s.prob,fmtPct(s.noPrazoPct)+' no prazo','good')+
     kpi('Atrasadas',s.atras,s.atrasAbertas+' ainda em aberto',s.atras?'warn':'')+
@@ -113,14 +115,15 @@ function openDrvStats(id){
 function entTable(list,compact){
   if(!list.length)return '<div class="empty">Nenhuma entrega encontrada.</div>';
   return '<div class="scroll"><table class="tbl"><thead><tr><th>#</th><th>Cliente</th>'+(compact?'':'<th>Motorista</th>')+'<th>Status</th><th>Saída</th><th>Conclusão</th><th>Retorno</th><th>Prazo</th></tr></thead><tbody>'+
-  list.slice(0,100).map(function(e){var m=colab(e.motoristaId);return '<tr data-act="open-ent" data-id="'+e.id+'"><td class="mono">'+e.id+'</td><td><b>'+esc(e.cliente)+'</b><span class="sub">'+e.itens.length+(e.itens.length===1?' item':' itens')+' · '+totalUn(e)+' un</span></td>'+
-    (compact?'':'<td>'+(m?esc(m.nome)+' '+tagTipo(m):'—')+'</td>')+'<td>'+pill(e.status)+'</td><td class="mono">'+hhmm(e.saidaEm)+'</td><td class="mono">'+hhmm(e.concluidoEm)+'</td><td class="mono">'+hhmm(e.retornoEm)+'</td><td class="mono">'+hhmm(e.prazo)+(late(e)?' <span class="late">atrasada</span>':'')+'</td></tr>';}).join('')+
+  list.slice(0,100).map(function(e){var m=colab(e.motoristaId);return '<tr data-act="open-ent" data-id="'+e.id+'"><td class="mono">'+e.id+'</td><td><b>'+esc(e.cliente)+'</b> '+tagOp(e)+'<span class="sub">'+e.itens.length+(e.itens.length===1?' item':' itens')+' · '+totalUn(e)+' un</span></td>'+
+    (compact?'':'<td>'+(m?esc(m.nome)+' '+tagTipo(m):'—')+'</td>')+'<td>'+pill(e.status,e.tipo)+'</td><td class="mono">'+hhmm(e.saidaEm)+'</td><td class="mono">'+hhmm(e.concluidoEm)+'</td><td class="mono">'+hhmm(e.retornoEm)+'</td><td class="mono">'+hhmm(e.prazo)+(late(e)?' <span class="late">atrasada</span>':'')+'</td></tr>';}).join('')+
   '</tbody></table></div>'+(list.length>100?'<p class="note" style="padding:8px 16px">Mostrando 100 de '+list.length+'. Refine os filtros.</p>':'');
 }
 function viewEntregas(){
   var f=UI.f;
-  return '<div class="page-h"><div><h1>Entregas</h1><p>Acompanhe saída, entrega e retorno de cada pedido.</p></div><button class="btn btn-primary" data-act="nova-ent">Nova entrega</button></div>'+
+  return '<div class="page-h"><div><h1>Entregas e coletas</h1><p>Acompanhe saída, entrega ou coleta e retorno de cada pedido.</p></div><button class="btn btn-primary" data-act="nova-ent">Nova entrega ou coleta</button></div>'+
   '<div class="filters"><input type="search" aria-label="Buscar" data-bind="f.q" placeholder="Buscar cliente, número ou código" value="'+esc(f.q)+'">'+
+  '<select aria-label="Tipo" data-bind="f.op">'+opts([['','Entregas e coletas'],['entrega','Só entregas'],['coleta','Só coletas']],f.op)+'</select>'+
   '<select aria-label="Período" data-bind="f.dia">'+opts([['hoje','Hoje'],['7d','7 dias'],['todos','Todas']],f.dia)+'</select>'+
   '<select aria-label="Status" data-bind="f.status">'+opts([['','Todos os status']].concat(Object.keys(STATUS).map(function(k){return [k,STATUS[k].l];})),f.status)+'</select>'+
   '<select aria-label="Motorista" data-bind="f.mot">'+opts([['','Todos os motoristas']].concat(DB.colaboradores.map(function(c){return [c.id,c.nome];})),f.mot)+'</select>'+
@@ -131,6 +134,7 @@ function filtroEntregas(){
   var f=UI.f,q=f.q.trim().toLowerCase();
   return DB.entregas.filter(function(e){
     if(!inPeriod(e,f.dia))return false;
+    if(f.op&&opDe(e)!==f.op)return false;
     if(f.status&&e.status!==f.status)return false;
     if(f.mot&&e.motoristaId!==f.mot)return false;
     if(f.tipo){var m=colab(e.motoristaId);if(!m||m.tipo!==f.tipo)return false;}
@@ -142,47 +146,52 @@ function fillEntregas(){var el=$('#lista');if(el)el.innerHTML=entTable(filtroEnt
 
 /* antes de abrir, pede os links temporários da foto e da assinatura (bucket privado) */
 function openEntrega(id){
-  var e0=DB.entregas.find(function(x){return x.id===id;});if(!e0)return;
+  var e0=entById(id);if(!e0)return;
   Dados.assinar([e0.foto,e0.assinatura]).then(function(){openEntregaView(id);});
 }
 function openEntregaView(id){
-  var e=DB.entregas.find(function(x){return x.id===id;});if(!e)return;
+  var e=entById(id);if(!e)return;
+  var col=ehColeta(e),editavel=naBase(e);
   var m=colab(e.motoristaId),ocs=DB.ocorrencias.filter(function(o){return o.entregaId===id;});
-  var c=isConcl(e),fl=c?STATUS[e.status].l:'Entrega';
+  var c=isConcl(e),fl=c?stL(e):(col?'Coleta':'Entrega');
   var tone=e.status==='devolvido'?'bad':e.status==='entregue_problema'?'warn':e.status==='enviado_errado'?'mag':'';
   function st(l,t,cls){return '<div class="st'+(t?' done '+(cls||''):'')+'"><b>'+l+'</b><span>'+(t?hhmm(t):'pendente')+'</span></div>';}
-  var tl='<div class="tl">'+st('Separado',e.criadoEm)+st('Saiu para entrega',e.saidaEm)+st(fl,e.concluidoEm,tone)+st('Motorista retornou',e.retornoEm)+'</div>';
+  var tl='<div class="tl">'+st('Separado',e.criadoEm)+st(col?'Saiu para coleta':'Saiu para entrega',e.saidaEm)+st(fl,e.concluidoEm,tone)+st('Motorista retornou',e.retornoEm)+'</div>';
   var dur=[];if(e.saidaEm&&e.concluidoEm)dur.push('Rota: '+fmtDur(mins(e.saidaEm,e.concluidoEm)));if(e.concluidoEm&&e.retornoEm)dur.push('Volta: '+fmtDur(mins(e.concluidoEm,e.retornoEm)));
-  var it='<div class="scroll"><table class="tbl" style="min-width:420px"><thead><tr><th>Código</th><th>Descrição</th><th class="r">Enviado</th><th class="r">Entregue</th></tr></thead><tbody>'+e.itens.map(function(i){var dif=c&&i.qtdEntregue!==i.qtd;return '<tr><td class="mono">'+esc(i.codigo)+'</td><td>'+esc(i.desc)+'</td><td class="r num">'+i.qtd+'</td><td class="r num"'+(dif?' style="color:var(--bad);font-weight:600"':'')+'>'+(c?i.qtdEntregue:'—')+'</td></tr>';}).join('')+'</tbody></table></div>';
+  var it='<div class="scroll"><table class="tbl" style="min-width:420px"><thead><tr><th>Código</th><th>Descrição</th><th class="r">'+(col?'Previsto':'Enviado')+'</th><th class="r">'+(col?'Coletado':'Entregue')+'</th></tr></thead><tbody>'+e.itens.map(function(i){var dif=c&&i.qtdEntregue!==i.qtd;return '<tr><td class="mono">'+esc(i.codigo)+'</td><td>'+esc(i.desc)+'</td><td class="r num">'+i.qtd+'</td><td class="r num"'+(dif?' style="color:var(--bad);font-weight:600"':'')+'>'+(c?i.qtdEntregue:'—')+'</td></tr>';}).join('')+'</tbody></table></div>';
   function ev(v,img){v=v?Dados.urlEvid(v):v;if(v&&String(v).indexOf('data:')===0)return '<img class="ev" alt="'+img+'" src="'+v+'">';if(v&&/^https:\/\//.test(String(v)))return '<a href="'+esc(v)+'" target="_blank" rel="noopener"><img class="ev" alt="'+img+'" src="'+esc(v)+'"></a>';if(v==='exemplo')return '<div class="ph">'+img+' registrada (exemplo)</div>';return '<div class="ph">Sem '+img.toLowerCase()+'</div>';}
   var ocH=ocs.length?'<div><div class="lbl" style="margin-bottom:6px">Ocorrências</div>'+ocs.map(function(o){return '<div class="li" style="padding:8px 0"><div><span class="pill p-'+(o.tipo==='devolvido'?'bad':o.tipo==='enviado_errado'?'mag':'warn')+'"><i></i>'+TIPOS_OC[o.tipo]+'</span><span class="sub">'+(o.codigo?esc(o.codigo)+' · ':'')+esc(o.motivo)+'</span></div><span class="mono muted">'+hhmm(o.em)+'</span></div>';}).join('')+'</div>':'';
   var act='';
+  if(!editavel){}
+  else{
   if(e.status==='separado')act+='<button class="btn" data-act="adm-saida" data-id="'+id+'">Registrar saída agora</button>';
-  if(e.status==='em_rota')act+='<button class="btn" data-act="adm-entregue" data-id="'+id+'">Marcar entregue</button><button class="btn btn-danger" data-act="adm-devolvido" data-id="'+id+'">Marcar devolvido</button>';
+  if(e.status==='em_rota')act+='<button class="btn" data-act="adm-entregue" data-id="'+id+'">'+(col?'Marcar coletada':'Marcar entregue')+'</button><button class="btn btn-danger" data-act="adm-devolvido" data-id="'+id+'">Marcar devolvido</button>';
   if(c&&!e.retornoEm)act+='<button class="btn" data-act="adm-retorno" data-id="'+id+'">Registrar retorno do motorista</button>';
   if(e.status!=='separado')act+='<button class="btn" data-act="oc-new" data-id="'+id+'">Registrar ocorrência</button>';
   if(usaReal()&&!temLocal(e))act+='<button class="btn" data-act="ent-loc" data-id="'+id+'">Localizar no mapa</button>';
-  openModal(mh('#'+e.id+' · '+esc(e.cliente),pill(e.status)+(late(e)?' <span class="late">atrasada</span>':''))+
-  '<div class="dlg-b"><div class="kv"><div><span>Motorista</span>'+(m?esc(m.nome)+' '+tagTipo(m)+'<div class="sub">'+esc(m.tipo==='Terceirizado'?m.empresa+' · ':'')+esc(m.veiculo)+' '+esc(m.placa)+'</div>':'—')+'</div><div><span>Endereço</span>'+esc(e.endereco)+'</div><div><span>Prazo</span><span class="mono" style="font-size:14px;letter-spacing:0;text-transform:none;color:inherit;font-weight:400">'+hhmm(e.prazo)+'</span></div>'+(e.recebedor?'<div><span>Recebido por</span>'+esc(e.recebedor)+'</div>':'')+'</div>'+
+  }
+  openModal(mh('#'+e.id+' · '+esc(e.cliente),tagOp(e)+' '+pill(e.status,e.tipo)+(late(e)?' <span class="late">atrasada</span>':''))+
+  '<div class="dlg-b"><div class="kv"><div><span>Motorista</span>'+(m?esc(m.nome)+' '+tagTipo(m)+'<div class="sub">'+esc(m.tipo==='Terceirizado'?m.empresa+' · ':'')+esc(m.veiculo)+' '+esc(m.placa)+'</div>':'—')+'</div><div><span>Endereço</span>'+esc(e.endereco)+'</div><div><span>Dia</span>'+esc(e.dia.split('-').reverse().join('/'))+'</div><div><span>Prazo</span><span class="mono" style="font-size:14px;letter-spacing:0;text-transform:none;color:inherit;font-weight:400">'+hhmm(e.prazo)+'</span></div>'+(e.recebedor?'<div><span>Recebido por</span>'+esc(e.recebedor)+'</div>':'')+'</div>'+
   tl+(dur.length?'<p class="note">'+dur.join(' · ')+'</p>':'')+it+
-  (c?'<div class="evs"><div><div class="lbl" style="margin-bottom:6px">Foto da entrega</div>'+ev(e.foto,'Foto')+'</div><div><div class="lbl" style="margin-bottom:6px">Assinatura do cliente</div>'+ev(e.assinatura,'Assinatura')+'</div></div>':'')+
+  (c?'<div class="evs"><div><div class="lbl" style="margin-bottom:6px">Foto da '+(col?'coleta':'entrega')+'</div>'+ev(e.foto,'Foto')+'</div><div><div class="lbl" style="margin-bottom:6px">Assinatura do cliente</div>'+ev(e.assinatura,'Assinatura')+'</div></div>':'')+
   ocH+(e.obs?'<div><div class="lbl">Observações</div><p>'+esc(e.obs)+'</p></div>':'')+(act?'<div class="dlg-f" style="justify-content:flex-start">'+act+'</div>':'')+'</div>');
 }
-function entById(id){return DB.entregas.find(function(x){return x.id===id;});}
+function entById(id){return DB.entregas.find(function(x){return x.id===id;})||histEntrega(id);}
+function naBase(e){return DB.entregas.indexOf(e)>=0;}
 function afterChange(id){save();renderApp();if(id)openEntrega(id);}
 
 function openNovaEntrega(){
   var d=new Date(Date.now()+3*3600000);if(d.getDate()!==new Date().getDate())d=new Date();var pz=pad(d.getHours())+':'+pad(d.getMinutes());
   var ativos=DB.colaboradores.filter(function(c){return c.ativo!==false;});
   function grp(t){return '<optgroup label="'+t+'s">'+ativos.filter(function(c){return c.tipo===t;}).map(function(c){return '<option value="'+c.id+'">'+esc(c.nome)+(c.empresa?' · '+esc(c.empresa):'')+'</option>';}).join('')+'</optgroup>';}
-  openModal(mh('Nova entrega','Informe os itens por código e quantidade.')+
-  '<form id="f-ent" class="dlg-b"><div class="form-grid"><div class="field"><label for="ne-c">Cliente</label><input id="ne-c" name="cliente" required autofocus></div><div class="field"><label for="ne-e">Endereço</label><input id="ne-e" name="endereco"></div>'+
-  '<div class="field"><label for="ne-m">Motorista</label><select id="ne-m" name="mot" required>'+grp('Efetivado')+grp('Terceirizado')+'</select></div><div class="field"><label for="ne-p">Prazo de entrega (hoje)</label><input id="ne-p" name="prazo" type="time" value="'+pz+'" required></div></div>'+
+  openModal(mh('Nova entrega ou coleta','Informe os itens por código e quantidade.')+
+  '<form id="f-ent" class="dlg-b"><div class="form-grid"><div class="field"><label for="ne-op">Tipo</label><select id="ne-op" name="op"><option value="entrega">Entrega (levar ao cliente)</option><option value="coleta">Coleta (buscar com o cliente)</option></select></div><div class="field"><label for="ne-c">Cliente</label><input id="ne-c" name="cliente" required autofocus></div><div class="field"><label for="ne-e">Endereço</label><input id="ne-e" name="endereco"></div>'+
+  '<div class="field"><label for="ne-m">Motorista</label><select id="ne-m" name="mot" required>'+grp('Efetivado')+grp('Terceirizado')+'</select></div><div class="field"><label for="ne-p">Prazo (hoje)</label><input id="ne-p" name="prazo" type="time" value="'+pz+'" required></div></div>'+
   '<div><div class="lbl" style="margin-bottom:6px">Local da entrega no mapa (opcional)</div>'+pickMapHtml()+'<p class="note" id="pick-note">Clique no mapa para marcar o local. Sem marcação, usamos o local do cliente cadastrado.</p><input type="hidden" name="px" id="ne-x"><input type="hidden" name="py" id="ne-y"><input type="hidden" name="plat" id="ne-lat"><input type="hidden" name="plng" id="ne-lng"></div>'+
   '<div><div class="lbl" style="margin-bottom:6px">Itens (código, descrição, quantidade)</div><div id="itens">'+itemRow()+'</div><button type="button" class="btn btn-sm" data-act="add-item">Adicionar item</button></div>'+
   '<div class="field"><label for="ne-o">Observações</label><textarea id="ne-o" name="obs"></textarea></div>'+
   '<datalist id="dl-cat">'+DB.catalogo.map(function(p){return '<option value="'+esc(p[0])+'">'+esc(p[1])+'</option>';}).join('')+'</datalist>'+
-  '<div class="err" id="ne-err" role="alert"></div><div class="dlg-f"><button class="btn" type="button" data-act="close">Cancelar</button><button class="btn" type="submit" data-mode="sep">Salvar como separado</button><button class="btn btn-primary" type="submit" data-mode="rota">Salvar e despachar</button></div></form>');
+  '<div class="err" id="ne-err" role="alert"></div><div class="dlg-f"><button class="btn" type="button" data-act="close">Cancelar</button><button class="btn" type="submit" data-mode="sep">Salvar sem despachar</button><button class="btn btn-primary" type="submit" data-mode="rota">Salvar e despachar</button></div></form>');
   if(usaReal())mrPick();
 }
 function itemRow(){return '<div class="item-row"><input name="codigo" list="dl-cat" placeholder="Código" aria-label="Código"><input name="desc" placeholder="Descrição" aria-label="Descrição"><input name="qtd" type="number" min="1" value="1" aria-label="Quantidade"><button type="button" class="btn" data-act="rm-item" aria-label="Remover item">×</button></div>';}
@@ -208,8 +217,9 @@ function saveEntrega(form,mode){
   }
   if(lat!=null&&lng!=null){var q=fromLL(lat,lng);px=Math.round(q.x);py=Math.round(q.y);}else{lat=null;lng=null;}
   var id=++DB.seq.ent,n=nowIso();
-  DB.entregas.push({id:id,x:px,y:py,lat:lat,lng:lng,dia:todayKey(),cliente:fv(form,'cliente').trim(),endereco:fv(form,'endereco').trim(),motoristaId:fv(form,'mot'),status:mode==='rota'?'em_rota':'separado',prazo:pz.toISOString(),criadoEm:n,saidaEm:mode==='rota'?n:null,concluidoEm:null,retornoEm:null,itens:itens,obs:fv(form,'obs').trim(),recebedor:'',foto:null,assinatura:null});
-  save();closeModal();renderApp();toast('Entrega #'+id+(mode==='rota'?' despachada':' criada'));
+  var op=fv(form,'op')==='coleta'?'coleta':'entrega';
+  DB.entregas.push({id:id,tipo:op,x:px,y:py,lat:lat,lng:lng,dia:todayKey(),cliente:fv(form,'cliente').trim(),endereco:fv(form,'endereco').trim(),motoristaId:fv(form,'mot'),status:mode==='rota'?'em_rota':'separado',prazo:pz.toISOString(),criadoEm:n,saidaEm:mode==='rota'?n:null,concluidoEm:null,retornoEm:null,itens:itens,obs:fv(form,'obs').trim(),recebedor:'',foto:null,assinatura:null});
+  save();closeModal();renderApp();toast((op==='coleta'?'Coleta #':'Entrega #')+id+(mode==='rota'?' despachada':' criada'));
 }
 function openOcForm(id){
   var e=entById(id);if(!e)return;

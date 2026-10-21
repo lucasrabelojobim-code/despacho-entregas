@@ -46,12 +46,12 @@ document.addEventListener('click',function(ev){
     case 'col-regen':{colab(id).token=randToken();save();openLink(id);toast('Novo link gerado. O anterior deixou de funcionar.');break;}
     case 'copy-link':{var inp=$('#lk');(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(inp.value):Promise.reject()).then(function(){toast('Link copiado');}).catch(function(){inp.select();toast('Selecione o texto e copie manualmente');});break;}
     case 'drv-saida':{var e5=entById(n);e5.status='em_rota';e5.saidaEm=nowIso();save();renderApp();toast('Saída registrada');break;}
-    case 'drv-saida-all':{var k=0,ts=nowIso();DB.entregas.forEach(function(e){if(e.motoristaId===SESSION.id&&e.status==='separado'){e.status='em_rota';e.saidaEm=ts;k++;}});save();renderApp();toast(k+' entregas em rota');break;}
+    case 'drv-saida-all':{var k=0,ts=nowIso();DB.entregas.forEach(function(e){if(e.motoristaId===SESSION.id&&e.status==='separado'){e.status='em_rota';e.saidaEm=ts;k++;}});save();renderApp();toast(k+(k===1?' pedido':' pedidos')+' em rota');break;}
     case 'drv-confirm':UI.drv={screen:'confirm',id:n};renderApp();window.scrollTo(0,0);break;
     case 'drv-back':UI.drv={screen:'home',id:null};renderApp();break;
     case 'drv-voltei':{var ts2=nowIso();DB.entregas.forEach(function(e){if(e.motoristaId===SESSION.id&&isConcl(e)&&!e.retornoEm)e.retornoEm=ts2;});save();renderApp();toast('Retorno registrado');break;}
     case 'sig-clear':{var cv=$('#sig');if(cv&&sigCtx){var r=cv.getBoundingClientRect();sigCtx.fillStyle='#fff';sigCtx.fillRect(0,0,r.width,r.height);UI.signed=false;}break;}
-    default:devAcao(a,t,id);  /* plano e área do desenvolvedor: js/plano.js e js/desenvolvedor.js */
+    default:if(!histAcao(a,t,id))devAcao(a,t,id);  /* plano e área do desenvolvedor: js/plano.js e js/desenvolvedor.js */
   }
 });
 document.addEventListener('input',function(ev){
@@ -87,7 +87,8 @@ document.addEventListener('submit',function(ev){
 });
 document.addEventListener('keydown',function(ev){
   if(ev.key==='Escape'&&!ov.hidden)closeModal();
-  var t=ev.target;if((ev.key==='Enter'||ev.key===' ')&&t.getAttribute&&t.getAttribute('role')==='button'&&t.dataset.act){ev.preventDefault();t.click();}
+  var t=ev.target;if(ev.key==='Enter'&&t.id==='em-end'){ev.preventDefault();mrBuscarEmpresa();return;}
+  if((ev.key==='Enter'||ev.key===' ')&&t.getAttribute&&t.getAttribute('role')==='button'&&t.dataset.act){ev.preventDefault();t.click();}
 });
 /* assinatura */
 document.addEventListener('pointerdown',function(ev){if(ev.target.id!=='sig'||!sigCtx)return;sigDraw=true;ev.target.setPointerCapture(ev.pointerId);var p=sigPos(ev);sigCtx.beginPath();sigCtx.moveTo(p[0],p[1]);sigCtx.lineTo(p[0]+0.1,p[1]+0.1);sigCtx.stroke();UI.signed=true;ev.preventDefault();});

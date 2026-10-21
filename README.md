@@ -109,3 +109,12 @@ marca/                logo e ícones da Arcos Jobim
 - Na demonstração, os pedidos recebem o número no navegador de quem cria. Para muitos usuários criando entregas ao mesmo tempo, passar a numeração para o banco.
 - A senha de um colaborador já criado só muda pelo painel do Supabase (Authentication → Users).
 - O mapa real desenha as rotas em linha reta entre as paradas. Uma etapa seguinte pode usar traçado por ruas.
+
+## Local da empresa, entrega ou coleta, histórico e tempo até a parada
+
+- **Local da empresa no mapa:** só o desenvolvedor define, em *Desenvolvedor > Empresa* (busca por endereço, clique no mapa ou arrastar o ícone **E**). Administradores e motoristas apenas veem. Fica guardado no banco (`banco/05-empresa-coleta.sql`).
+- **Entrega ou coleta:** ao criar um pedido, escolha o *Tipo*. A coleta segue o mesmo caminho (saída, conclusão, retorno), com nomes próprios ("Coletada", "Saí para coleta") e marcador quadrado no mapa.
+- **Histórico:** aba nova para administrador e desenvolvedor. Clique num dia do calendário (ou em dois dias para marcar um período), use os atalhos (Hoje, Ontem, 7 dias, 30 dias, Este mês, Mês passado) e veja indicadores, gráficos de rendimento, desempenho por motorista, ocorrências, abastecimento e a lista completa do que aconteceu.
+- **Tempo até a próxima parada:** no mapa do administrador/desenvolvedor, cada motorista mostra "chega em ~N min". A conta usa as ruas (serviço OSRM) a partir do GPS do celular (ou da posição simulada). É uma estimativa e não considera trânsito; sem internet de rotas, usa a linha reta.
+
+Ordem para atualizar um site que já está no ar: rode o `banco/05-empresa-coleta.sql` no Supabase e depois envie os arquivos do site ao GitHub.

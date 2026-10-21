@@ -16,7 +16,7 @@ function renderApp(){
 var tAtualiza=null;
 function ocupado(){
   var tag=((document.activeElement||{}).tagName||'');
-  return !ov.hidden||UI.drv.screen==='confirm'||UI.drv.screen==='abast'||/INPUT|TEXTAREA|SELECT/.test(tag);
+  return !ov.hidden||(UI.view==='historico'&&SESSION&&SESSION.role==='admin')||(UI.view==='desenvolvedor'&&UI.dev.aba==='empresa')||UI.drv.screen==='confirm'||UI.drv.screen==='abast'||/INPUT|TEXTAREA|SELECT/.test(tag);
 }
 function tick(){
   if(!SESSION)return;

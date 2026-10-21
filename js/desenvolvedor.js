@@ -9,14 +9,15 @@ function msgErro(e){return (e&&e.message)||String(e);}
 function dtHora(iso){return iso?new Date(iso).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'—';}
 
 function viewDev(){
-  var abas=[['plano','Plano'],['codigos','Códigos'],['usuarios','Usuários']];
-  return '<div class="page-h"><div><h1>Desenvolvedor</h1><p>Área restrita: plano da empresa, códigos de acesso e todos os usuários.</p></div>'+
+  var abas=[['plano','Plano'],['codigos','Códigos'],['usuarios','Usuários'],['empresa','Empresa']];
+  return '<div class="page-h"><div><h1>Desenvolvedor</h1><p>Área restrita: plano da empresa, códigos de acesso, usuários e local da empresa.</p></div>'+
     '<div class="seg" role="group" aria-label="Seção">'+abas.map(function(a){return '<button data-act="dev-aba" data-p="'+a[0]+'" aria-pressed="'+(UI.dev.aba===a[0])+'">'+a[1]+'</button>';}).join('')+'</div></div>'+
     '<div id="dev-corpo"></div>';
 }
 function fillDev(){
   var el=$('#dev-corpo');if(!el)return;
   var n=++DEV.seq,aba=UI.dev.aba;
+  if(aba==='empresa'){el.innerHTML=devEmpresaHtml();if(usaReal())mrEmpresa();return;}
   el.innerHTML='<div class="empty">Carregando…</div>';
   var p=aba==='plano'?Dados.devLicenca().then(devPlanoHtml):
         aba==='codigos'?Dados.devCodigos().then(devCodigosHtml):
@@ -52,6 +53,26 @@ function devPlanoHtml(l){
         '<button class="btn btn-danger" type="button" data-act="dev-bloquear-tudo">Bloquear tudo agora</button></div>'+
         '<p class="note" style="margin-top:6px">Bloquear tranca todos os usuários da empresa. Para liberar, gere um código na aba Códigos ou libere o Full.</p></div>'+
     '</div></section></div>';
+}
+
+/* ---------- aba Empresa: local da empresa no mapa ---------- */
+function devEmpresaHtml(){
+  var def=empresaDefinida();
+  var atual=EMPRESA?'<span class="pill p-good"><i></i>Definido</span> '+esc(EMPRESA.endereco||(EMPRESA.lat.toFixed(5)+', '+EMPRESA.lng.toFixed(5))):
+    '<span class="pill p-warn"><i></i>Ainda não definido</span> O mapa está usando um ponto de exemplo em Manaus.';
+  return '<section class="panel"><div class="panel-h"><h2>Local da empresa no mapa</h2></div><div class="panel-b">'+
+    '<p style="margin-bottom:10px">'+atual+'</p>'+
+    '<p class="note" style="margin-bottom:10px">É daqui que as rotas saem e é onde aparece o ícone <b>E</b> no mapa. Só o desenvolvedor altera; administradores e motoristas apenas veem.</p>'+
+    (usaReal()?'<form id="f-dev-empresa" autocomplete="off">'+
+      '<div class="row" style="align-items:flex-end;margin-bottom:8px"><div class="field" style="flex:1;min-width:220px"><label for="em-end">Endereço da empresa</label><input id="em-end" name="endereco" maxlength="250" placeholder="Rua, número, bairro" value="'+esc(EMPRESA?EMPRESA.endereco:'')+'"></div>'+
+      '<button class="btn" type="button" data-act="emp-buscar">Localizar pelo endereço</button></div>'+
+      '<div id="empmap" class="rmap" style="height:340px"></div>'+
+      '<p class="note" id="em-note" style="margin-top:6px">'+(def?'Local atual da empresa.':'Clique no mapa para marcar o local da empresa, ou busque pelo endereço.')+'</p>'+
+      '<input type="hidden" name="lat" id="em-lat"><input type="hidden" name="lng" id="em-lng">'+
+      '<div class="err" id="dv-err" role="alert"></div>'+
+      '<div class="row" style="margin-top:8px"><button class="btn btn-primary" type="submit" id="em-save" disabled>Salvar local da empresa</button></div></form>':
+      '<div class="empty">O mapa real não carregou. Verifique a conexão com a internet e abra esta aba de novo.</div>')+
+    '</div></section>';
 }
 
 /* ---------- aba Códigos ---------- */
@@ -108,6 +129,7 @@ function devAcao(a,t,id){
     case 'abrir-codigo':abrirCodigo();break;
     case 'dev-codigo-ok':closeModal();renderApp();break;
     case 'dev-aba':UI.dev.aba=t.dataset.p;renderApp();break;
+    case 'emp-buscar':mrBuscarEmpresa();break;
     case 'dev-full':
       if(confirm('Liberar o plano Full para a empresa, sem código?'))Dados.devPlano('full').then(function(){return devAtualizar('Plano Full liberado');}).catch(function(e){devFalha(e);});
       break;
@@ -167,6 +189,11 @@ function devEnvio(f){
       var d=parseInt(fv(f,'dias'),10),agora=!!(f.elements.namedItem('agora')||{}).checked;
       if(!(d>=1&&d<=365)){toast('Informe de 1 a 365 dias.');fim();return;}
       Dados.devPlano('teste',d,agora).then(function(){return devAtualizar('Teste grátis de '+d+(d===1?' dia':' dias')+(agora?' iniciado':' pronto: começa no primeiro login'));}).catch(function(e){fim();devFalha(e);});
+      break;}
+    case 'f-dev-empresa':{
+      var la=parseFloat(fv(f,'lat')),lo=parseFloat(fv(f,'lng'));
+      if(isNaN(la)||isNaN(lo)){$('#dv-err').textContent='Marque o local da empresa no mapa antes de salvar.';fim();return;}
+      Dados.devLocalEmpresa(la,lo,fv(f,'endereco').trim()).then(function(){MR.view=null;fim();toast('Local da empresa salvo. O mapa já usa o novo ponto.');fillDev();}).catch(function(e){fim();devFalha(e,'dv-err');});
       break;}
     case 'f-dev-estender':{
       var d2=parseInt(fv(f,'dias'),10);

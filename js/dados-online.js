@@ -7,7 +7,7 @@ var DadosOnline=(function(){
   var STR={empresa:1,veiculo:1,placa:1,telefone:1,cpf:1,matricula:1,obs:1,recebedor:1,endereco:1,codigo:1,motivo:1,usuario:1,modelo:1,combustivel:1,posto:1};
   var MAPA={
     colaboradores:{id:'id',nome:'nome',tipo:'tipo',empresa:'empresa',veiculo:'veiculo',placa:'placa',telefone:'telefone',usuario:'usuario',cpf:'cpf',matricula:'matricula',ativo:'ativo',token:'token',authId:'auth_id'},
-    entregas:{id:'id',dia:'dia',cliente:'cliente',endereco:'endereco',motoristaId:'motorista_id',status:'status',prazo:'prazo',criadoEm:'criado_em',saidaEm:'saida_em',concluidoEm:'concluido_em',retornoEm:'retorno_em',itens:'itens',obs:'obs',recebedor:'recebedor',foto:'foto',assinatura:'assinatura',x:'x',y:'y',lat:'lat',lng:'lng'},
+    entregas:{id:'id',dia:'dia',cliente:'cliente',endereco:'endereco',motoristaId:'motorista_id',status:'status',prazo:'prazo',criadoEm:'criado_em',saidaEm:'saida_em',concluidoEm:'concluido_em',retornoEm:'retorno_em',tipo:'tipo',itens:'itens',obs:'obs',recebedor:'recebedor',foto:'foto',assinatura:'assinatura',x:'x',y:'y',lat:'lat',lng:'lng'},
     ocorrencias:{id:'id',entregaId:'entrega_id',dia:'dia',tipo:'tipo',codigo:'codigo',motivo:'motivo',em:'em',motoristaId:'motorista_id'},
     veiculos:{id:'id',placa:'placa',tipo:'tipo',modelo:'modelo',combustivel:'combustivel',capacidade:'capacidade',kmInicial:'km_inicial',metaKml:'meta_kml',ativo:'ativo'},
     abastecimentos:{id:'id',veiculoId:'veiculo_id',motoristaId:'motorista_id',em:'em',km:'km',litros:'litros',valor:'valor',cheio:'cheio',posto:'posto',fotoOdometro:'foto_odometro',fotoNota:'foto_nota',obs:'obs',origem:'origem'}
@@ -19,7 +19,12 @@ var DadosOnline=(function(){
     if(!sb)sb=window.supabase.createClient(CONFIG.supabaseUrl,CONFIG.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true}});
     return sb;
   }
-  function toRow(tab,o){var m=MAPA[tab],r={};Object.keys(m).forEach(function(k){var v=o[k];r[m[k]]=(v===undefined?null:v);});return r;}
+  function toRow(tab,o){
+    var m=MAPA[tab],r={};Object.keys(m).forEach(function(k){var v=o[k];r[m[k]]=(v===undefined?null:v);});
+    /* entrega comum não manda a coluna "tipo": assim o site continua funcionando mesmo antes do arquivo 05 do banco */
+    if(tab==='entregas'&&(r.tipo==null||r.tipo==='entrega'))delete r.tipo;
+    return r;
+  }
   function fromRow(tab,r){
     var m=MAPA[tab],o={};
     Object.keys(m).forEach(function(k){
@@ -29,7 +34,7 @@ var DadosOnline=(function(){
       o[k]=v;
     });
     if(tab==='colaboradores'){o.senha='';if(o.ativo==null)o.ativo=true;}
-    if(tab==='entregas'&&typeof o.itens==='string')o.itens=JSON.parse(o.itens);
+    if(tab==='entregas'){if(typeof o.itens==='string')o.itens=JSON.parse(o.itens);o.tipo=o.tipo==='coleta'?'coleta':'entrega';}
     if(tab==='veiculos'){o.capacidade=num(o.capacidade);o.kmInicial=num(o.kmInicial)||0;o.metaKml=num(o.metaKml);}
     if(tab==='abastecimentos'){o.km=num(o.km);o.litros=num(o.litros);o.valor=num(o.valor);o.cheio=o.cheio!==false;}
     return o;
@@ -100,6 +105,19 @@ var DadosOnline=(function(){
     d.entregas.forEach(function(x){snap.entregas[x.id]=JSON.stringify(x);});
     d.ocorrencias.forEach(function(x){snap.ocorrencias[x.id]=JSON.stringify(x);});
     d.catalogo.forEach(function(x){snap.catalogo[x[0]]=x[1];});
+  }
+  /* local da empresa (definido pelo desenvolvedor); sem o arquivo 05 no banco, o mapa usa o ponto de exemplo */
+  function carregarEmpresa(){
+    return cli().rpc('local_empresa').then(function(r){
+      if(r.error||!r.data||r.data.lat==null)return;
+      EMPRESA={lat:Number(r.data.lat),lng:Number(r.data.lng),endereco:r.data.endereco||''};
+    },function(){});
+  }
+  /* o Supabase devolve no máximo 1000 linhas por pedido: busca em páginas */
+  function paginar(mk){
+    var tudo=[];
+    function pg(i){return mk().range(i,i+999).then(function(r){falhou(r);var d=r.data||[];tudo=tudo.concat(d);return d.length===1000?pg(i+1000):tudo;});}
+    return pg(0);
   }
   function carregarPosicoes(){
     return cli().from('ultima_posicao').select('*').then(function(r){
@@ -189,7 +207,7 @@ var DadosOnline=(function(){
       }).catch(function(){return null;});
     },
     carregar:function(){
-      return buscar().then(function(d){DB=d;marcarSnap(d);return carregarPosicoes();});
+      return buscar().then(function(d){DB=d;marcarSnap(d);return Promise.all([carregarPosicoes(),carregarEmpresa()]);});
     },
     salvar:function(){
       clearTimeout(tmr);
@@ -257,6 +275,29 @@ var DadosOnline=(function(){
     devCriarAdmin:function(usuario,senha){
       var email=usuario.indexOf('@')>0?usuario:usuario.toLowerCase()+'@'+CONFIG.dominioLogin;
       return novoLogin(email,senha).then(function(id){return cli().from('perfis').insert({auth_id:id,papel:'admin'});}).then(falhou);
+    },
+    /* ===== histórico: busca um período (a tela inicial só traz os últimos 30 dias) ===== */
+    historico:function(de,ate){
+      var ini=new Date(de+'T00:00:00').toISOString(),fim=new Date(ate+'T23:59:59.999').toISOString();
+      return Promise.all([
+        paginar(function(){return cli().from('entregas').select('*').gte('dia',de).lte('dia',ate).order('id');}),
+        paginar(function(){return cli().from('ocorrencias').select('*').gte('dia',de).lte('dia',ate).order('id');}),
+        paginar(function(){return cli().from('abastecimentos').select('*').gte('em',ini).lte('em',fim).order('em');}).catch(function(){return [];})
+      ]).then(function(rs){
+        return {entregas:rs[0].map(function(r){return fromRow('entregas',r);}),
+                ocorrencias:rs[1].map(function(r){return fromRow('ocorrencias',r);}),
+                abastecimentos:rs[2].map(function(r){return fromRow('abastecimentos',r);})};
+      });
+    },
+    /* quantos pedidos houve em cada dia (para marcar o calendário) */
+    diasComMovimento:function(de,ate){
+      return paginar(function(){return cli().from('entregas').select('id,dia').gte('dia',de).lte('dia',ate).order('id');}).then(function(l){
+        var m={};l.forEach(function(r){m[r.dia]=(m[r.dia]||0)+1;});return m;
+      });
+    },
+    /* só o desenvolvedor: local da empresa no mapa */
+    devLocalEmpresa:function(lat,lng,endereco){
+      return rpc('dev_definir_local_empresa',{p_lat:lat,p_lng:lng,p_endereco:endereco||''}).then(function(){EMPRESA={lat:lat,lng:lng,endereco:endereco||''};});
     },
     assinar:assinar,
     urlEvid:function(v){var p=caminho(v);return p===null?v:(urls[p]||null);},

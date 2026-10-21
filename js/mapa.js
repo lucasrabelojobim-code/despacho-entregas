@@ -72,9 +72,9 @@ function mapSvg(routes,o){
     var seen={};
     r.stops.forEach(function(e,ix){
       var p=pos(e),k=p.x+','+p.y,n=seen[k]=(seen[k]||0)+1,off=(n-1)*11*u,cx=p.x+off,cy=p.y-off,done=isConcl(e);
-      g+='<g'+(o.interactive&&o.stopAct?' data-act="map-stop" data-id="'+e.id+'" style="cursor:pointer"':'')+'><title>Parada '+(ix+1)+': '+esc(e.cliente)+' ('+STATUS[e.status].l+')</title>'+
+      g+='<g'+(o.interactive&&o.stopAct?' data-act="map-stop" data-id="'+e.id+'" style="cursor:pointer"':'')+'><title>Parada '+(ix+1)+': '+esc(e.cliente)+' ('+(ehColeta(e)?'coleta · ':'')+stL(e)+')</title>'+
         (o.hl===e.id?'<circle cx="'+cx+'" cy="'+cy+'" r="'+16*u+'" fill="none" stroke="var(--ink)" stroke-width="'+2.5*u+'"/>':'')+
-        '<circle cx="'+cx+'" cy="'+cy+'" r="'+9.5*u+'" fill="'+(done?'currentColor':'var(--surface)')+'" stroke="currentColor" stroke-width="'+2.5*u+'"/>'+
+        (ehColeta(e)?'<rect x="'+(cx-9*u)+'" y="'+(cy-9*u)+'" width="'+18*u+'" height="'+18*u+'" rx="'+3*u+'" fill="'+(done?'currentColor':'var(--surface)')+'" stroke="currentColor" stroke-width="'+2.5*u+'"/>':'<circle cx="'+cx+'" cy="'+cy+'" r="'+9.5*u+'" fill="'+(done?'currentColor':'var(--surface)')+'" stroke="currentColor" stroke-width="'+2.5*u+'"/>')+
         '<text x="'+cx+'" y="'+(cy+3.8*u)+'" text-anchor="middle" font-size="'+11*u+'" font-weight="700" fill="'+(done?'#fff':'currentColor')+'">'+(ix+1)+'</text></g>';
     });
     var ter=r.c.tipo==='Terceirizado',m=r.pos;
@@ -105,12 +105,12 @@ function viewMapa(){
   var side=rs.length?rs.map(function(r){
     var n=r.stops.length,d=r.doneN,sel=UI.mapSel===r.c.id,nx=r.stops[d];
     return '<div class="mrow" role="button" tabindex="0" data-act="map-sel" data-id="'+r.c.id+'" aria-pressed="'+sel+'"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span><i class="dot" style="background:'+r.color+'"></i><b>'+esc(r.c.nome)+'</b> '+tagTipo(r.c)+(gpsVivo(r.c.id)?' <span class="pill p-good"><i></i>GPS</span>':'')+'</span><span class="num">'+d+'/'+n+'</span></div>'+
-      '<span class="sub">'+(nx?'Próxima: '+esc(nx.cliente)+' · prazo '+hhmm(nx.prazo)+(late(nx)?' · atrasada':''):'Todas as paradas concluídas')+'</span>'+
-      (sel?'<div class="mstops">'+r.stops.map(function(e,i){return '<div><span><span class="n">'+(i+1)+'</span>'+esc(e.cliente)+'</span>'+pill(e.status)+'</div>';}).join('')+'</div>':'')+'</div>';
+      '<span class="sub">'+(nx?'Próxima '+(ehColeta(nx)?'coleta':'entrega')+': '+esc(nx.cliente)+' · prazo '+hhmm(nx.prazo)+(late(nx)?' · atrasada':''):'Todas as paradas concluídas')+'</span>'+(nx?'<span class="sub eta" data-eta="'+esc(r.c.id)+'">'+etaLinha(r.c.id)+'</span>':'')+
+      (sel?'<div class="mstops">'+r.stops.map(function(e,i){return '<div><span><span class="n">'+(i+1)+'</span>'+esc(e.cliente)+' '+tagOp(e)+'</span>'+pill(e.status,e.tipo)+'</div>';}).join('')+'</div>':'')+'</div>';
   }).join(''):'<div class="empty">Nenhum motorista em rota agora.</div>';
   var corpo=real?
-    '<div id="rmap" class="rmap" role="region" aria-label="Mapa das rotas em andamento"></div><p class="note" id="mr-aviso" hidden>Não foi possível carregar o mapa. Verifique a conexão com a internet.</p><div class="mlegend"><span>Círculo grande: motorista (tracejado roxo = terceirizado)</span><span>Numerado: paradas</span><span>Motorista claro = posição simulada, sólido = GPS do celular</span></div>':
-    '<div class="mapbox">'+mapSvg(rs,{sel:UI.mapSel,interactive:true,markerAct:true,names:true,label:'Mapa das rotas em andamento'})+'</div>'+mapLegend(true);
+    '<div id="rmap" class="rmap" role="region" aria-label="Mapa das rotas em andamento"></div><p class="note" id="mr-aviso" hidden>Não foi possível carregar o mapa. Verifique a conexão com a internet.</p><div class="mlegend"><span>Círculo grande: motorista (tracejado roxo = terceirizado)</span><span>Numerado: paradas</span><span>Motorista claro = posição simulada, sólido = GPS do celular</span><span>Redondo = entrega, quadrado = coleta</span><span>Minutos: estimativa pelas ruas até a próxima parada, sem contar trânsito</span></div>':
+    '<div class="mapbox">'+mapSvg(rs,{sel:UI.mapSel,interactive:true,markerAct:true,names:true,label:'Mapa das rotas em andamento'})+'</div>'+mapLegend(true)+'<div class="mlegend"><span>Minutos: estimativa em linha reta/ruas até a próxima parada, sem contar trânsito</span></div>';
   h+='<div class="grid-2"><section class="panel"><div class="panel-h"><h2>Rotas em andamento</h2><span class="note">Clique no motorista para isolar a rota</span></div><div class="panel-b">'+corpo+'</div></section>'+
     '<section class="panel"><div class="panel-h"><h2>Em rota agora</h2></div><div class="list">'+side+'</div></section></div>';
   return h;

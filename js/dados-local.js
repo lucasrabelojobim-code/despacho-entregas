@@ -1,7 +1,7 @@
 'use strict';
 /* Camada de dados LOCAL: tudo fica no navegador (localStorage). */
 var LS='despacho-entregas-v1', LSS='despacho-sessao-v1', LSP='despacho-posicoes-v1';
-var DB=null, SESSION=null;
+var DB=null, SESSION=null, EMPRESA=null;   /* EMPRESA: local da empresa definido pelo desenvolvedor (modo online) */
 
 function load(){
   try{var raw=localStorage.getItem(LS);if(raw){DB=JSON.parse(raw);if(DB&&DB.v===1&&!(DB.demo&&DB.seedDay!==todayKey())){garantirCombustivel(DB);return;}}}catch(e){}
@@ -30,6 +30,18 @@ var DadosLocal={
   atualizar:function(){return Promise.resolve(false);},
   criarAcesso:function(c){return Promise.resolve(c);},
   statusAcesso:function(){return Promise.resolve({liberado:true,motivo:'ok',plano:'full',dev:false,local:true});},
+  /* histórico: no modo local tudo já está em DB */
+  historico:function(de,ate){
+    return Promise.resolve({
+      entregas:DB.entregas.filter(function(e){return e.dia>=de&&e.dia<=ate;}),
+      ocorrencias:DB.ocorrencias.filter(function(o){return o.dia>=de&&o.dia<=ate;}),
+      abastecimentos:DB.abastecimentos.filter(function(a){var d=dayKey(a.em);return d>=de&&d<=ate;})
+    });
+  },
+  diasComMovimento:function(de,ate){
+    var m={};DB.entregas.forEach(function(e){if(e.dia>=de&&e.dia<=ate)m[e.dia]=(m[e.dia]||0)+1;});
+    return Promise.resolve(m);
+  },
   assinar:function(){return Promise.resolve();},
   urlEvid:function(v){return v;},
   posicoes:function(){try{return JSON.parse(localStorage.getItem(LSP)||'{}');}catch(e){return {};}},

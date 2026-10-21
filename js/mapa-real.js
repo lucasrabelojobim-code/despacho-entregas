@@ -1,6 +1,6 @@
 'use strict';
 /* Mapa real (OpenStreetMap + Leaflet) e GPS do celular do motorista. */
-var MR={adm:null,drv:null,pick:null,voce:null,view:null,marcaPick:null};
+var MR={adm:null,drv:null,pick:null,voce:null,view:null,marcaPick:null,mkMot:{},emp:null};
 var GPS={ativo:false,watch:null,pos:null,ultimoEnvio:0,erro:''};
 
 function usaReal(){return UI.mapa==='real'&&!!window.L;}
@@ -10,7 +10,11 @@ function fromLL(lat,lng){return {x:Math.max(0,Math.min(800,(lng+60.06)/0.08*800)
 function llOf(e){return (e.lat!=null&&e.lng!=null)?[e.lat,e.lng]:toLL(pos(e));}
 function temLocal(e){return e.lat!=null&&e.lng!=null;}
 /* ponto de saída: usa o endereço real da empresa se estiver no config.js; senão, o ponto de exemplo */
-function empLL(){return (CONFIG.empresaLat!=null&&CONFIG.empresaLng!=null)?[CONFIG.empresaLat,CONFIG.empresaLng]:toLL(EMP);}
+function empLL(){
+  if(EMPRESA)return [EMPRESA.lat,EMPRESA.lng];   /* definido pelo desenvolvedor (aba Desenvolvedor > Empresa) */
+  return (CONFIG.empresaLat!=null&&CONFIG.empresaLng!=null)?[CONFIG.empresaLat,CONFIG.empresaLng]:toLL(EMP);
+}
+function empresaDefinida(){return !!EMPRESA||(CONFIG.empresaLat!=null&&CONFIG.empresaLng!=null);}
 function corHex(c){
   var v=getComputedStyle(document.documentElement).getPropertyValue('--d'+((Math.max(0,DB.colaboradores.indexOf(c))%8)+1)).trim();
   return v||'#0B6BB8';
@@ -87,30 +91,106 @@ function mrCompletarLocais(rs,m){
   });
 }
 
+/* ---- tempo estimado até a próxima parada (administrador e desenvolvedor) ----
+   Mostra quantos minutos faltam para o motorista chegar na próxima parada. A conta é feita pelas ruas
+   (OSRM) a partir da posição dele (GPS do celular ou posição simulada). Se o serviço não responder, usa
+   a distância em linha reta com velocidade média. Não conta trânsito: é uma estimativa. */
+var ETA={};
+var VEL_MEDIA_KMH=25,FATOR_RUA=1.3;
+function kmReta(a,b){
+  var R=6371,t=Math.PI/180,dLa=(b[0]-a[0])*t,dLo=(b[1]-a[1])*t;
+  var h=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a[0]*t)*Math.cos(b[0]*t)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function origemMot(r){var g=Dados.posicoes()[r.c.id];return (g&&ageMin(g.em)<=10)?[g.lat,g.lng]:toLL(r.pos);}
+function etaCurto(id){var x=ETA[id];return x&&x.min!=null?'~'+fmtDur(Math.max(1,x.min)):'';}
+function etaLinha(id){
+  var x=ETA[id];if(!x)return '';
+  if(x.min==null)return 'Sem local no mapa para estimar o tempo';
+  return 'Chega em '+etaCurto(id)+(x.via==='reta'?' (linha reta)':'')+(x.alvo?' · '+x.alvo:'');
+}
+function pintaEta(id){
+  [].forEach.call(document.querySelectorAll('[data-eta="'+id+'"]'),function(el){el.textContent=etaLinha(id);});
+  var mk=MR.mkMot&&MR.mkMot[id];if(!mk)return;
+  try{mk.unbindTooltip();}catch(e){}
+  var t=etaCurto(id);
+  if(t)mk.bindTooltip(t,{permanent:true,direction:'top',offset:[0,-20],className:'eta-tip'});
+}
+function mrEtas(rs){
+  rs.forEach(function(r){
+    var nx=r.stops[r.doneN],id=r.c.id;
+    if(!nx){delete ETA[id];return;}
+    if(!temLocal(nx)){ETA[id]={min:null,alvo:nx.cliente};pintaEta(id);return;}
+    var o=origemMot(r),d=llOf(nx);
+    var reta=Math.round(kmReta(o,d)*FATOR_RUA/VEL_MEDIA_KMH*60);
+    if(!ETA[id]||ETA[id].alvo!==nx.cliente||ETA[id].via!=='ruas')ETA[id]={min:reta,via:'reta',alvo:nx.cliente};
+    pintaEta(id);
+    var o3=[+o[0].toFixed(3),+o[1].toFixed(3)],d5=[+d[0].toFixed(5),+d[1].toFixed(5)];
+    rotaPorRuas([o3,d5],function(rt){
+      if(!rt)return;
+      ETA[id]={min:rt.min,via:'ruas',alvo:nx.cliente};pintaEta(id);
+    });
+  });
+}
+
+/* ---- mapa para o desenvolvedor definir o local da empresa ---- */
+function mrEmpresa(){
+  var el=document.getElementById('empmap');if(!el)return;
+  matar('emp');MR.emp=null;
+  var ini=empLL(),m=novoMapa('empmap',ini,empresaDefinida()?16:13),marca=null;
+  MR.emp=m;
+  function poe(ll,txt){
+    if(marca)marca.setLatLng(ll);else{
+      marca=L.marker(ll,{draggable:true,icon:icone('<div class="mk-emp">E</div>','',26)}).addTo(m);
+      marca.on('dragend',function(){var p=marca.getLatLng();poe([p.lat,p.lng]);});
+    }
+    document.getElementById('em-lat').value=ll[0].toFixed(6);document.getElementById('em-lng').value=ll[1].toFixed(6);
+    var n=document.getElementById('em-note');if(n)n.textContent=txt||('Local marcado: '+ll[0].toFixed(5)+', '+ll[1].toFixed(5)+'. Arraste o ícone ou clique em outro ponto para ajustar.');
+    var b=document.getElementById('em-save');if(b)b.disabled=false;
+  }
+  if(empresaDefinida())poe(ini,'Local atual da empresa. Clique no mapa, arraste o ícone ou busque um endereço para mudar.');
+  m.on('click',function(ev){poe([ev.latlng.lat,ev.latlng.lng]);});
+  MR.empPoe=poe;
+  setTimeout(function(){m.invalidateSize();},200);
+}
+function mrBuscarEmpresa(){
+  var q=(document.getElementById('em-end').value||'').trim();
+  if(!q){toast('Digite o endereço da empresa.');return;}
+  var btn=document.querySelector('[data-act="emp-buscar"]'),n=document.getElementById('em-note');
+  if(btn)btn.disabled=true;if(n)n.textContent='Procurando no mapa…';
+  geocodificar(q).then(function(a){
+    if(btn)btn.disabled=false;
+    if(!a.length){if(n)n.textContent='Não achei esse endereço. Inclua rua e bairro, ou clique no mapa para marcar o local.';return;}
+    MR.emp.setView([a[0].lat,a[0].lng],17);
+    MR.empPoe([a[0].lat,a[0].lng],'Encontrado: '+a[0].nome.split(',').slice(0,4).join(',')+'. Confira no mapa e ajuste se precisar antes de salvar.');
+  }).catch(function(){if(btn)btn.disabled=false;if(n)n.textContent='Não foi possível buscar agora. Clique no mapa para marcar o local.';});
+}
+
 /* ---- administrador ---- */
 function mrAdmin(rs){
   var el=document.getElementById('rmap');if(!el)return;
-  matar('adm');
+  matar('adm');MR.mkMot={};
   var emp=empLL();
   var m=novoMapa('rmap',MR.view?MR.view.c:emp,MR.view?MR.view.z:13);
   MR.adm=m;
   var gp=Dados.posicoes(),b=[];
   b.push(emp);
   mrCompletarLocais(rs,m);
-  L.marker(emp,{icon:icone('<div class="mk-emp">E</div>','',26),title:'Empresa'}).addTo(m).bindPopup('<b>Empresa</b><br>Ponto de saída'+((CONFIG.empresaLat==null)?'<br><span style="color:#B7791F">Local de exemplo. Informe o endereço real da empresa.</span>':''));
+  L.marker(emp,{icon:icone('<div class="mk-emp">E</div>','',26),title:'Empresa'}).addTo(m).bindPopup('<b>Empresa</b><br>Ponto de saída'+(EMPRESA&&EMPRESA.endereco?'<br>'+esc(EMPRESA.endereco):'')+(empresaDefinida()?'':'<br><span style="color:#B7791F">Local de exemplo.'+(SESSION&&SESSION.dev?' Defina o local em Desenvolvedor &gt; Empresa.':' Peça ao desenvolvedor para definir o local da empresa.')+'</span>'));
   rs.forEach(function(r){
     var cor=corHex(r.c),dim=UI.mapSel&&UI.mapSel!==r.c.id,op=dim?0.25:1;
     var pts=[emp].concat(r.stops.map(llOf));
     desenhaRota(m,'adm',pts,r.stops,cor,op,r.c.nome);
     r.stops.forEach(function(e,i){
       var done=isConcl(e),p=llOf(e);b.push(p);
-      L.marker(p,{icon:icone('<div class="mk-stop'+(done?' done':'')+'" style="--c:'+cor+'">'+(i+1)+'</div>','',24),opacity:op}).addTo(m)
-        .bindPopup('<b>Parada '+(i+1)+': '+esc(e.cliente)+'</b><br>'+esc(e.endereco)+'<br>'+STATUS[e.status].l+' · prazo '+hhmm(e.prazo)+(temLocal(e)?'':'<br><span style="color:#B7791F">Local aproximado: o endereço ainda não foi localizado no mapa.</span>'));
+      L.marker(p,{icon:icone('<div class="mk-stop'+(done?' done':'')+(ehColeta(e)?' col':'')+'" style="--c:'+cor+'">'+(i+1)+'</div>','',24),opacity:op}).addTo(m)
+        .bindPopup('<b>Parada '+(i+1)+': '+esc(e.cliente)+'</b><br>'+esc(e.endereco)+'<br>'+(ehColeta(e)?'Coleta · ':'')+stL(e)+' · prazo '+hhmm(e.prazo)+(temLocal(e)?'':'<br><span style="color:#B7791F">Local aproximado: o endereço ainda não foi localizado no mapa.</span>'));
     });
     var g=gp[r.c.id],vivo=g&&ageMin(g.em)<=10,p2=vivo?[g.lat,g.lng]:toLL(r.pos);b.push(p2);
-    L.marker(p2,{icon:icone('<div class="mk-drv'+(r.c.tipo==='Terceirizado'?' ter':'')+(vivo?'':' sim')+'" style="--c:'+cor+'">'+esc(ini2(r.c))+'</div>','',34),opacity:op,zIndexOffset:1000}).addTo(m)
-      .bindPopup('<b>'+esc(r.c.nome)+'</b> ('+esc(r.c.tipo)+')<br>'+(vivo?'GPS do celular · há '+ageMin(g.em)+' min':'Posição simulada (sem GPS ativo)'))
+    var mkd=L.marker(p2,{icon:icone('<div class="mk-drv'+(r.c.tipo==='Terceirizado'?' ter':'')+(vivo?'':' sim')+'" style="--c:'+cor+'">'+esc(ini2(r.c))+'</div>','',34),opacity:op,zIndexOffset:1000}).addTo(m)
+      .bindPopup('<b>'+esc(r.c.nome)+'</b> ('+esc(r.c.tipo)+')<br>'+(vivo?'GPS do celular · há '+ageMin(g.em)+' min':'Posição simulada (sem GPS ativo)')+(ETA[r.c.id]?'<br>'+esc(etaLinha(r.c.id)):''))
       .on('click',function(){UI.mapSel=(UI.mapSel===r.c.id?null:r.c.id);});
+    MR.mkMot[r.c.id]=mkd;pintaEta(r.c.id);
   });
   if(!MR.view&&b.length>1)m.fitBounds(b,{padding:[30,30],maxZoom:15});
   m.on('moveend',function(){MR.view={c:m.getCenter(),z:m.getZoom()};});
@@ -129,7 +209,7 @@ function mrDriver(){
   desenhaRota(m,'drv',[emp].concat(r.stops.map(llOf)),r.stops,cor,1,'');
   r.stops.forEach(function(e,i){
     var p=llOf(e);b.push(p);
-    var mk=L.marker(p,{icon:icone('<div class="mk-stop'+(isConcl(e)?' done':'')+(UI.drv.hl===e.id?' hl':'')+'" style="--c:'+cor+'">'+(i+1)+'</div>','',24)}).addTo(m);
+    var mk=L.marker(p,{icon:icone('<div class="mk-stop'+(isConcl(e)?' done':'')+(ehColeta(e)?' col':'')+(UI.drv.hl===e.id?' hl':'')+'" style="--c:'+cor+'">'+(i+1)+'</div>','',24)}).addTo(m);
     mk.bindPopup('<b>Parada '+(i+1)+': '+esc(e.cliente)+'</b><br>'+esc(e.endereco)+'<br>Prazo '+hhmm(e.prazo)+
       '<br><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination='+p[0]+','+p[1]+'">Abrir rota no GPS do celular</a>');
     if(UI.drv.hl===e.id)mk.openPopup();
