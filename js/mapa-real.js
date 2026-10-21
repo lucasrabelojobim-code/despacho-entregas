@@ -59,11 +59,11 @@ function avisoMapa(m,txt){
 function desenhaRota(m,dono,pts,paradas,cor,op,nome){
   var reta=L.polyline(pts,{color:cor,weight:4,opacity:op*0.8,dashArray:'8 8'}).addTo(m);
   var sem=paradas.filter(function(e){return !temLocal(e);});
-  if(sem.length){
-    if(op>=1)avisoMapa(m,'Linha reta: sem local no mapa em '+sem.map(function(e){return '#'+e.id;}).join(', ')+'. Abra a entrega e use "Localizar no mapa".');
-    return;
-  }
-  rotaPorRuas(pts,function(rt){
+  if(sem.length&&op>=1)avisoMapa(m,'Rota pelas ruas sem '+sem.map(function(e){return '#'+e.id;}).join(', ')+' (sem local no mapa). Abra a entrega e use "Localizar no mapa".');
+  var com=paradas.filter(temLocal);
+  if(!com.length)return;
+  var ptsReal=[pts[0]].concat(com.map(llOf));
+  rotaPorRuas(ptsReal,function(rt){
     if(MR[dono]!==m)return;
     if(!rt){if(op>=1)avisoMapa(m,'Não consegui traçar pelas ruas agora. Mostrando linha reta.');return;}
     try{m.removeLayer(reta);}catch(e){}
