@@ -31,7 +31,7 @@ function curPos(stops,doneN){
 function routeOf(c,mode){
   var all=DB.entregas.filter(function(e){return e.motoristaId===c.id&&(e.dia===todayKey()||!isConcl(e));});
   if(mode==='admin'&&!all.some(function(e){return e.status==='em_rota';}))return null;
-  var done=all.filter(function(e){return isConcl(e)&&!e.retornoEm;}).sort(function(a,b){return a.concluidoEm.localeCompare(b.concluidoEm);});
+  var done=[];  /* o mapa mostra só o que ainda está em rota (entregas já concluídas não aparecem) */
   var pend=all.filter(function(e){return e.status==='em_rota'||(mode==='driver'&&e.status==='separado');}).sort(function(a,b){
     var ra=a.status==='em_rota'?0:1,rb=b.status==='em_rota'?0:1;return ra-rb||a.prazo.localeCompare(b.prazo);});
   if(!done.length&&!pend.length)return null;
