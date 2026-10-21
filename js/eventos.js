@@ -14,6 +14,7 @@ document.addEventListener('click',function(ev){
     case 'gps-on':gpsLigar();break;
     case 'gps-off':gpsDesligar();renderApp();break;
     case 'geo-buscar':mrBuscarEndereco();break;
+    case 'ent-loc':openLocalizarEntrega(n);break;
     case 'geo-pick':escolherGeo(n);break;
     case 'map-tipo':UI.mapTipo=t.dataset.p;UI.mapSel=null;renderApp();break;
     case 'map-sel':UI.mapSel=(UI.mapSel===id?null:id);renderApp();break;
@@ -74,6 +75,7 @@ document.addEventListener('submit',function(ev){
   var f=ev.target;ev.preventDefault();
   if(f.id==='f-login')doLogin(fv(f,'u'),fv(f,'p'));
   else if(f.id==='f-ent')saveEntrega(f,(ev.submitter&&ev.submitter.dataset.mode)||'sep');
+  else if(f.id==='f-loc')saveLocalizarEntrega(f);
   else if(f.id==='f-col')saveColab(f);
   else if(f.id==='f-oc')saveOc(f);
   else if(f.id==='f-conf')finishConf(f);

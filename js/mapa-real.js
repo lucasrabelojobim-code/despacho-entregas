@@ -60,7 +60,7 @@ function desenhaRota(m,dono,pts,paradas,cor,op,nome){
   var reta=L.polyline(pts,{color:cor,weight:4,opacity:op*0.8,dashArray:'8 8'}).addTo(m);
   var sem=paradas.filter(function(e){return !temLocal(e);});
   if(sem.length){
-    if(op>=1)avisoMapa(m,'Linha reta: sem local no mapa em '+sem.map(function(e){return '#'+e.id;}).join(', ')+'. Edite a entrega e use "Localizar pelo endereço".');
+    if(op>=1)avisoMapa(m,'Linha reta: sem local no mapa em '+sem.map(function(e){return '#'+e.id;}).join(', ')+'. Abra a entrega e use "Localizar no mapa".');
     return;
   }
   rotaPorRuas(pts,function(rt){
@@ -188,7 +188,7 @@ function escolherGeo(i){
   if(n)n.textContent='Local encontrado: '+x.nome.split(',').slice(0,4).join(',')+'. Confira no mapa e, se precisar, clique em outro ponto para ajustar.';
 }
 function mrBuscarEndereco(){
-  var q=(document.getElementById('ne-e').value.trim())||(document.getElementById('ne-c').value.trim());
+  var ec=document.getElementById('ne-c'),q=(document.getElementById('ne-e').value.trim())||(ec?ec.value.trim():'');
   if(!q){toast('Digite o endereço primeiro.');return;}
   var box=document.getElementById('geo-res'),btn=document.querySelector('[data-act="geo-buscar"]');
   if(box)box.innerHTML='<span class="note">Procurando no mapa…</span>';

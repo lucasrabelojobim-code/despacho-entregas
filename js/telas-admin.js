@@ -158,6 +158,7 @@ function openEntregaView(id){
   if(e.status==='em_rota')act+='<button class="btn" data-act="adm-entregue" data-id="'+id+'">Marcar entregue</button><button class="btn btn-danger" data-act="adm-devolvido" data-id="'+id+'">Marcar devolvido</button>';
   if(c&&!e.retornoEm)act+='<button class="btn" data-act="adm-retorno" data-id="'+id+'">Registrar retorno do motorista</button>';
   if(e.status!=='separado')act+='<button class="btn" data-act="oc-new" data-id="'+id+'">Registrar ocorrência</button>';
+  if(usaReal()&&!temLocal(e))act+='<button class="btn" data-act="ent-loc" data-id="'+id+'">Localizar no mapa</button>';
   openModal(mh('#'+e.id+' · '+esc(e.cliente),pill(e.status)+(late(e)?' <span class="late">atrasada</span>':''))+
   '<div class="dlg-b"><div class="kv"><div><span>Motorista</span>'+(m?esc(m.nome)+' '+tagTipo(m)+'<div class="sub">'+esc(m.tipo==='Terceirizado'?m.empresa+' · ':'')+esc(m.veiculo)+' '+esc(m.placa)+'</div>':'—')+'</div><div><span>Endereço</span>'+esc(e.endereco)+'</div><div><span>Prazo</span><span class="mono" style="font-size:14px;letter-spacing:0;text-transform:none;color:inherit;font-weight:400">'+hhmm(e.prazo)+'</span></div>'+(e.recebedor?'<div><span>Recebido por</span>'+esc(e.recebedor)+'</div>':'')+'</div>'+
   tl+(dur.length?'<p class="note">'+dur.join(' · ')+'</p>':'')+it+
@@ -299,4 +300,23 @@ function openDados(){
   openModal(mh('Dados do modo local')+'<div class="dlg-b"><p>Tudo fica salvo neste navegador. Use as opções abaixo para recomeçar.</p>'+
   '<div><button class="btn" data-act="ask" data-t="reset">Restaurar dados de exemplo</button><div id="ask-reset" hidden class="row" style="margin-top:8px"><span class="note">Isso substitui tudo pelos dados de exemplo.</span><button class="btn btn-danger btn-sm" data-act="do-reset">Confirmar</button></div></div>'+
   '<div><button class="btn" data-act="ask" data-t="clear">Apagar entregas e ocorrências</button><div id="ask-clear" hidden class="row" style="margin-top:8px"><span class="note">Os colaboradores continuam cadastrados.</span><button class="btn btn-danger btn-sm" data-act="do-clear">Confirmar</button></div></div></div>',true);
+}
+
+/* corrigir o local de uma entrega que ficou sem posição no mapa */
+function openLocalizarEntrega(id){
+  var e=entById(id);if(!e)return;
+  openModal(mh('Localizar no mapa','#'+e.id+' · '+esc(e.cliente))+
+  '<form id="f-loc" class="dlg-b" data-id="'+id+'"><div class="field"><label for="ne-e">Endereço</label><input id="ne-e" name="endereco" value="'+esc(e.endereco||'')+'"></div>'+
+  '<div><div class="lbl" style="margin-bottom:6px">Local no mapa</div>'+pickMapHtml()+'<p class="note" id="pick-note">Clique em "Localizar pelo endereço" ou clique no mapa para marcar o local.</p><input type="hidden" id="ne-lat"><input type="hidden" id="ne-lng"></div>'+
+  '<div class="err" id="ne-err" role="alert"></div><div class="dlg-f"><button class="btn" type="button" data-act="close">Cancelar</button><button class="btn btn-primary" type="submit">Salvar local</button></div></form>');
+  mrPick();
+}
+function saveLocalizarEntrega(form){
+  var e=entById(+form.dataset.id)||entById(form.dataset.id);if(!e)return;
+  var lat=parseFloat($('#ne-lat').value),lng=parseFloat($('#ne-lng').value);
+  if(isNaN(lat)||isNaN(lng)){$('#ne-err').textContent='Marque o local no mapa antes de salvar.';return;}
+  e.endereco=fv(form,'endereco');e.lat=lat;e.lng=lng;
+  var q=fromLL(lat,lng);e.x=Math.round(q.x);e.y=Math.round(q.y);
+  GEO_TENTOU[e.id]=1;
+  save();closeModal();renderApp();toast('Local salvo. A rota será traçada pelas ruas.');
 }
