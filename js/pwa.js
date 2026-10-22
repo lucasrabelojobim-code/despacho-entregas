@@ -21,7 +21,7 @@ function modoMsg(s){
 }
 /* bloco da tela de login */
 function pwaHtml(){
-  if(!appModo())return '<div class="pwa-box"><b>Instalar no celular</b><span class="note">Escolha o app certo:</span><a class="btn btn-lg" href="admin.html">ArcoRota Admin · administração</a><a class="btn btn-lg" href="colaborador.html">ArcoRota Motorista · efetivados e terceirizados</a></div>';
+  if(!appModo())return '<div class="pwa-box"><b>Instalar no celular</b><span class="note">Escolha o app certo:</span><a class="btn btn-lg" href="admin.html">ArcoRota Admin · administração</a><a class="btn btn-lg" href="colaborador.html">ArcoRota Motorista · efetivados e terceirizados</a><a class="note" href="instalar.html">Ver QR codes para instalar</a></div>';
   if(pwaStandalone()||PWA.instalado)return '';
   if(PWA.prompt)return '<div class="pwa-box"><button class="btn btn-lg" type="button" data-act="pwa-instalar">Instalar o '+appNome()+' no celular</button><span class="note">Fica com o ícone na tela, abre em tela cheia e recebe as atualizações sozinho.</span></div>';
   if(pwaIOS())return '<div class="pwa-box"><b>Instalar no iPhone</b><span class="note">Abra este endereço no <b>Safari</b>, toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.</span></div>';
