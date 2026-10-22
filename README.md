@@ -154,3 +154,7 @@ Em **Histórico**, depois de escolher o período e os filtros, use **Baixar Exce
 ## Alertas para o administrador
 
 Com o app aberto, o administrador recebe um aviso na tela (e um bipe, que pode ser desligado) quando surge uma **ocorrência nova** ou uma **entrega/coleta passa do prazo**. Clicar no aviso abre o pedido. O botão "Avisar no celular" pede permissão para notificações do aparelho quando o app está em segundo plano. Os avisos aparecem a cada atualização do painel (cerca de 15 s).
+
+## Entrar com digital ou rosto
+
+Em cada aparelho, o motorista (na tela inicial) ou o administrador (botão **Dados**) pode tocar em **Ativar neste aparelho** no cartão "Digital ou rosto". Depois disso o app pede a digital, o rosto ou o PIN do celular ao abrir e ao voltar depois de 3 minutos fora. A senha só é pedida de novo quando a pessoa usa **Sair**. É um bloqueio do aparelho (WebAuthn): ele não substitui a senha do banco e só aparece em celulares com biometria ou PIN configurado.

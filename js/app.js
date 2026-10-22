@@ -4,6 +4,7 @@ var Dados=(CONFIG.supabaseUrl&&CONFIG.supabaseKey&&window.supabase)?DadosOnline:
 
 function renderApp(){
   if(!SESSION){app.innerHTML=viewLogin()+rodape();return;}
+  if(BIO.travado){closeModal();app.innerHTML=viewBioLock()+rodape();return;}
   /* plano vencido, empresa bloqueada ou usuário bloqueado: só a tela de bloqueio */
   if(LIC&&LIC.liberado===false){closeModal();gpsDesligar();app.innerHTML=viewBloqueio()+rodape();return;}
   if(SESSION.role==='admin'){app.innerHTML=bannerPlano()+adminShell()+rodape();mountAdmin();}
@@ -16,7 +17,7 @@ function renderApp(){
 var tAtualiza=null;
 function ocupado(){
   var tag=((document.activeElement||{}).tagName||'');
-  return !ov.hidden||(UI.view==='historico'&&SESSION&&SESSION.role==='admin')||(UI.view==='desenvolvedor'&&(UI.dev.aba==='empresa'||UI.dev.aba==='limpar'))||UI.drv.screen==='confirm'||UI.drv.screen==='abast'||/INPUT|TEXTAREA|SELECT/.test(tag);
+  return BIO.travado||!ov.hidden||(UI.view==='historico'&&SESSION&&SESSION.role==='admin')||(UI.view==='desenvolvedor'&&(UI.dev.aba==='empresa'||UI.dev.aba==='limpar'))||UI.drv.screen==='confirm'||UI.drv.screen==='abast'||/INPUT|TEXTAREA|SELECT/.test(tag);
 }
 function tick(){
   if(!SESSION)return;
@@ -68,6 +69,7 @@ function boot(){
     });
   }).then(function(){
     renderApp();alertasChecar();iniciarAtualizacao();
+    if(SESSION&&bioAtivo())bioTrava();
   }).catch(function(err){
     app.innerHTML='<div style="padding:24px"><b>Não foi possível iniciar.</b><p class="muted">'+esc(err&&err.message)+'</p></div>';
   });

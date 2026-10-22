@@ -308,7 +308,7 @@ function fillOcs(){
 /* ============ admin: dados ============ */
 function openDados(){
   if(Dados.modo==='online'){
-    openModal(mh('Dados')+'<div class="dlg-b"><p>Os dados estão no banco online (Supabase). O painel atualiza sozinho a cada poucos segundos.</p><p class="note">Para apagar ou restaurar dados, use o painel do Supabase (Table Editor).</p></div>',true);
+    openModal(mh('Dados')+'<div class="dlg-b"><p>Os dados estão no banco online (Supabase). O painel atualiza sozinho a cada poucos segundos.</p><p class="note">Para apagar ou restaurar dados, use o painel do Supabase (Table Editor).</p>'+bioCard()+'</div>',true);
     return;
   }
   openModal(mh('Dados do modo local')+'<div class="dlg-b"><p>Tudo fica salvo neste navegador. Use as opções abaixo para recomeçar.</p>'+
