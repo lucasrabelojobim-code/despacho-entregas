@@ -168,6 +168,7 @@ function openEntregaView(id){
   if(e.status==='em_rota')act+='<button class="btn" data-act="adm-entregue" data-id="'+id+'">'+(col?'Marcar coletada':'Marcar entregue')+'</button><button class="btn btn-danger" data-act="adm-devolvido" data-id="'+id+'">Marcar devolvido</button>';
   if(c&&!e.retornoEm)act+='<button class="btn" data-act="adm-retorno" data-id="'+id+'">Registrar retorno do motorista</button>';
   if(e.status!=='separado')act+='<button class="btn" data-act="oc-new" data-id="'+id+'">Registrar ocorrência</button>';
+  if(Dados.modo==='online'&&!c)act+='<button class="btn" data-act="link-cli" data-id="'+id+'">Link para o cliente</button>';
   if(usaReal()&&!temLocal(e))act+='<button class="btn" data-act="ent-loc" data-id="'+id+'">Localizar no mapa</button>';
   }
   openModal(mh('#'+e.id+' · '+esc(e.cliente),tagOp(e)+' '+pill(e.status,e.tipo)+(late(e)?' <span class="late">atrasada</span>':''))+

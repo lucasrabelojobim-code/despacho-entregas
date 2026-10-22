@@ -305,6 +305,12 @@ var DadosOnline=(function(){
       return rpc('dev_definir_local_empresa',{p_lat:lat,p_lng:lng,p_endereco:endereco||''}).then(function(){EMPRESA={lat:lat,lng:lng,endereco:endereco||''};});
     },
     /* ===== limpar histórico (só o desenvolvedor; o banco confere de novo) ===== */
+    /* link do cliente: gera (ou reaproveita) o código secreto da entrega e monta o endereço da página pública */
+    linkAcompanhamento:function(id){
+      return rpc('gerar_link_acompanhamento',{p_id:id}).then(function(t){
+        return location.href.split('#')[0].split('?')[0].replace(/[^\/]*$/,'')+'acompanhar.html?t='+t;
+      });
+    },
     devContarLimpeza:function(de,ate,o){return rpc('dev_contar_limpeza',parLimpeza(de,ate,o));},
     devLimpar:function(de,ate,o){return rpc('dev_limpar_historico',parLimpeza(de,ate,o));},
     /* caminhos dos arquivos (fotos/assinaturas) dos registros que serão apagados */

@@ -140,3 +140,9 @@ Cada app só aceita o seu tipo de usuário. A página geral (`index.html`) conti
 - **iPhone (Safari):** Compartilhar → Adicionar à Tela de Início.
 - **Atualizações:** é só publicar no GitHub. O app busca a versão nova quando há internet e mostra "Nova versão disponível · Atualizar" se estiver aberto. A cada publicação, troque o `?v=` nos 3 arquivos HTML (`index.html`, `admin.html`, `colaborador.html`); o aviso usa o `?v=` do `js/app.js`.
 - O GPS no iPhone só atualiza com o app aberto na tela (regra da Apple).
+
+## Link de acompanhamento para o cliente
+
+Na janela de uma entrega ou coleta (ainda não concluída), o administrador clica em **Link para o cliente**, copia ou envia por WhatsApp. O cliente abre `acompanhar.html` no celular, sem login, e vê a situação, o tempo estimado e o motorista no mapa (atualiza a cada 20 s). O link encerra 24 horas depois de concluída.
+
+Segurança: o código do link tem 64 caracteres aleatórios e a página só recebe o necessário (situação, prazo, primeiro nome do motorista, destino e posição do motorista em rota). Precisa rodar `banco/07-acompanhamento-cliente.sql` uma vez no Supabase.

@@ -42,6 +42,7 @@ var DadosLocal={
     var m={};DB.entregas.forEach(function(e){if(e.dia>=de&&e.dia<=ate)m[e.dia]=(m[e.dia]||0)+1;});
     return Promise.resolve(m);
   },
+  linkAcompanhamento:function(){return Promise.reject(new Error('Disponível só no modo online.'));},
   assinar:function(){return Promise.resolve();},
   urlEvid:function(v){return v;},
   posicoes:function(){try{return JSON.parse(localStorage.getItem(LSP)||'{}');}catch(e){return {};}},
