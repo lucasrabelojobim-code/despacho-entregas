@@ -146,3 +146,7 @@ Cada app só aceita o seu tipo de usuário. A página geral (`index.html`) conti
 Na janela de uma entrega ou coleta (ainda não concluída), o administrador clica em **Link para o cliente**, copia ou envia por WhatsApp. O cliente abre `acompanhar.html` no celular, sem login, e vê a situação, o tempo estimado e o motorista no mapa (atualiza a cada 20 s). O link encerra 24 horas depois de concluída.
 
 Segurança: o código do link tem 64 caracteres aleatórios e a página só recebe o necessário (situação, prazo, primeiro nome do motorista, destino e posição do motorista em rota). Precisa rodar `banco/07-acompanhamento-cliente.sql` uma vez no Supabase.
+
+## Relatório em Excel e PDF
+
+Em **Histórico**, depois de escolher o período e os filtros, use **Baixar Excel** (planilha com as abas Resumo, Entregas e coletas, Ocorrências e Abastecimentos) ou **Baixar PDF** (abre a impressão; escolha "Salvar como PDF"). O relatório respeita o período, o tipo, o motorista e o vínculo escolhidos.

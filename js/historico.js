@@ -80,7 +80,8 @@ function viewHist(){
     '<div class="field"><label for="h-op">Tipo</label><select id="h-op" data-bind="h.op">'+opts([['','Entregas e coletas'],['entrega','Só entregas'],['coleta','Só coletas']],h.op)+'</select></div>'+
     '<div class="field"><label for="h-mot">Motorista</label><select id="h-mot" data-bind="h.mot">'+opts([['','Todos os motoristas']].concat(DB.colaboradores.map(function(c){return [c.id,c.nome];})),h.mot)+'</select></div>'+
     '<div class="field"><label for="h-vin">Vínculo</label><select id="h-vin" data-bind="h.vin">'+opts([['','Efetivados e terceirizados'],['Efetivado','Efetivados'],['Terceirizado','Terceirizados']],h.vin)+'</select></div>'+
-    '<p class="note">Os gráficos e a lista abaixo respeitam o período e os filtros.</p></div></section></div>'+
+    '<p class="note">Os gráficos e a lista abaixo respeitam o período e os filtros.</p>'+
+    '<div class="row"><button class="btn" type="button" data-act="h-xlsx">Baixar Excel</button><button class="btn" type="button" data-act="h-pdf">Baixar PDF</button></div></div></section></div>'+
   '<div id="h-corpo"><div class="empty">Carregando…</div></div>';
 }
 function histIniciar(){UI.h.cont={};histCarregar();histContagem();}
