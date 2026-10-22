@@ -355,3 +355,11 @@ input[type=checkbox]{accent-color:var(--accent)}
 .pwa-box{display:flex;flex-direction:column;gap:6px;margin-top:18px;padding:12px 14px;border:1px dashed var(--line,#2A3E50);border-radius:10px}
 .pwa-novo{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:200;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-radius:10px;background:#0B6BB8;color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:420px;margin-inline:auto}
 .pwa-novo .btn{background:#fff;color:#0B6BB8;border-color:#fff}
+
+/* alertas do administrador */
+.alertas{position:fixed;top:calc(10px + env(safe-area-inset-top));right:10px;z-index:180;width:min(360px,calc(100vw - 20px));display:flex;flex-direction:column;gap:6px}
+.alerta{display:flex;align-items:stretch;background:#3B2A12;border:1px solid #F5B14C;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.45);overflow:hidden}
+.alerta-c{flex:1;text-align:left;background:none;border:0;color:#FFEBC8;padding:9px 12px;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.alerta-c span{font-size:13px;color:#E8CFA0}
+.alerta-x{background:none;border:0;border-left:1px solid #7A5A22;color:#FFEBC8;width:38px;font-size:20px;cursor:pointer}
+.alertas-f{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}

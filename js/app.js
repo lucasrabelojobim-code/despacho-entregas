@@ -28,11 +28,15 @@ function tick(){
       if(st.liberado===false){if(estava)renderApp();return null;}
       if(!estava)return Dados.carregar().then(renderApp);
       return Dados.atualizar().then(function(mudou){
+        alertasChecar();
         if(ocupado())return;
         if(mudou||(SESSION.role==='admin'&&UI.view==='mapa'))renderApp();
       });
     }).catch(function(){});
-  }else if(SESSION.role==='admin'&&UI.view==='mapa'&&!ocupado()){mountAdmin();}
+  }else{
+    alertasChecar();
+    if(SESSION.role==='admin'&&UI.view==='mapa'&&!ocupado())mountAdmin();
+  }
 }
 function iniciarAtualizacao(){
   if(tAtualiza)return;
@@ -63,7 +67,7 @@ function boot(){
       return st.liberado===false?null:Dados.carregar();
     });
   }).then(function(){
-    renderApp();iniciarAtualizacao();
+    renderApp();alertasChecar();iniciarAtualizacao();
   }).catch(function(err){
     app.innerHTML='<div style="padding:24px"><b>Não foi possível iniciar.</b><p class="muted">'+esc(err&&err.message)+'</p></div>';
   });

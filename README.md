@@ -150,3 +150,7 @@ Segurança: o código do link tem 64 caracteres aleatórios e a página só rece
 ## Relatório em Excel e PDF
 
 Em **Histórico**, depois de escolher o período e os filtros, use **Baixar Excel** (planilha com as abas Resumo, Entregas e coletas, Ocorrências e Abastecimentos) ou **Baixar PDF** (abre a impressão; escolha "Salvar como PDF"). O relatório respeita o período, o tipo, o motorista e o vínculo escolhidos.
+
+## Alertas para o administrador
+
+Com o app aberto, o administrador recebe um aviso na tela (e um bipe, que pode ser desligado) quando surge uma **ocorrência nova** ou uma **entrega/coleta passa do prazo**. Clicar no aviso abre o pedido. O botão "Avisar no celular" pede permissão para notificações do aparelho quando o app está em segundo plano. Os avisos aparecem a cada atualização do painel (cerca de 15 s).

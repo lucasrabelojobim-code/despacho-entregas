@@ -43,7 +43,7 @@ function doLogin(u,p){
   }).catch(function(e){SESSION=null;LIC=null;UI.loginMsg='Erro ao entrar: '+((e&&e.message)||e);renderApp();});
 }
 function logout(){
-  gpsDesligar();
+  gpsDesligar();alertasZerar();
   LIC=null;
   var fim=Dados.sair();
   SESSION=null;saveSession();
