@@ -1,0 +1,33 @@
+{
+  "id": "./colaborador.html",
+  "name": "ArcoRota Motorista",
+  "short_name": "ArcoRota Mot",
+  "description": "App do motorista: entregas, coletas, GPS e abastecimento.",
+  "lang": "pt-BR",
+  "start_url": "./colaborador.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0C1B27",
+  "theme_color": "#0C1B27",
+  "icons": [
+    {
+      "src": "marca/mot-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "marca/mot-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "marca/mot-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -127,11 +127,16 @@ Fluxo: **Conferir** (mostra quantos registros serão apagados) → digitar **APA
 
 Para funcionar, rode **uma vez** `banco/06-limpar-historico.sql` no Supabase (SQL Editor → Run) antes de publicar os arquivos novos. O banco recusa qualquer usuário que não seja desenvolvedor.
 
-## App no celular (Android e iPhone)
+## App no celular: ArcoRota Admin e ArcoRota Motorista
 
-O site é um app instalável (PWA): `manifest.webmanifest`, `sw.js` e `js/pwa.js`. O ícone é só o símbolo da marca (`marca/icone-*.png`).
+O sistema chama-se **ArcoRota** e tem dois apps instaláveis (PWA), com o mesmo site e o mesmo banco:
 
-- **Android (Chrome):** menu ⋮ → Instalar aplicativo (ou o botão "Instalar o app no celular" na tela de login).
+- **ArcoRota Admin** (`admin.html`, faixa azul no ícone): administrador e desenvolvedor.
+- **ArcoRota Motorista** (`colaborador.html`, faixa verde): colaboradores efetivados e terceirizados.
+
+Cada app só aceita o seu tipo de usuário. A página geral (`index.html`) continua funcionando e mostra os dois botões de instalação.
+
+- **Android (Chrome):** botão "Instalar" na tela de login ou menu ⋮ → Instalar aplicativo.
 - **iPhone (Safari):** Compartilhar → Adicionar à Tela de Início.
-- **Atualizações:** continuam sendo só publicar no GitHub. O app sempre busca a versão mais nova quando há internet e mostra "Nova versão disponível · Atualizar" se estiver aberto. A cada publicação, troque o `?v=` dos arquivos no `index.html` (o aviso usa o `?v=` do `js/app.js`).
+- **Atualizações:** é só publicar no GitHub. O app busca a versão nova quando há internet e mostra "Nova versão disponível · Atualizar" se estiver aberto. A cada publicação, troque o `?v=` nos 3 arquivos HTML (`index.html`, `admin.html`, `colaborador.html`); o aviso usa o `?v=` do `js/app.js`.
 - O GPS no iPhone só atualiza com o app aberto na tela (regra da Apple).

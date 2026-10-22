@@ -50,6 +50,7 @@ function boot(){
     }
     return s;
   }).then(function(s){
+    var mm=modoMsg(s);if(mm){UI.loginMsg=mm;s=null;}
     SESSION=s||null;
     if(Dados.modo==='local'&&h.indexOf('#mot-')===0){
       var c=DB.colaboradores.find(function(x){return x.token&&('mot-'+x.token)===h.slice(1);});

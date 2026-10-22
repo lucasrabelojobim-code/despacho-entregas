@@ -1,10 +1,10 @@
 'use strict';
-/* Service worker do Despacho: deixa o app abrir mesmo com sinal fraco.
+/* Service worker do ArcoRota: deixa o app abrir mesmo com sinal fraco.
    Regra principal: SEMPRE tenta a internet primeiro (assim as atualizações chegam sozinhas e os dados
    nunca ficam velhos). O cache só entra quando não há rede. Dados do Supabase, mapas e rotas são de
    outros endereços e NÃO passam por aqui. */
-var CACHE='despacho-app-v1';
-var BASE=['./','index.html','manifest.webmanifest','marca/icone-192.png'];
+var CACHE='arcorota-app-v2';
+var BASE=['./','index.html','admin.html','colaborador.html','admin.webmanifest','colaborador.webmanifest','marca/admin-192.png','marca/mot-192.png'];
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(BASE);}).catch(function(){}).then(function(){return self.skipWaiting();}));
 });

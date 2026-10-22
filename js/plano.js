@@ -45,7 +45,7 @@ function viewBloqueio(){
     m==='sem_perfil'?'Este usuário não tem permissão de acesso. Fale com o administrador do sistema.':
     'O acesso a este sistema está bloqueado. Para liberar, ative o plano Full com um código de acesso.';
   return '<div class="login">'+
-    '<section class="login-side"><img class="logo-login" src="marca/logo.svg" alt="Arcos Jobim · Automação &amp; Software"><div class="prod">Despacho de Entregas</div>'+
+    '<section class="login-side"><img class="logo-login" src="marca/logo.svg" alt="Arcos Jobim · Automação &amp; Software"><div class="prod">'+appNome()+'</div>'+
     '<h1>'+esc(tit)+'.</h1><p class="dim">O sistema e o aplicativo ficam indisponíveis até a ativação do plano Full.</p></section>'+
     '<section class="login-form"><h2>'+esc(tit)+'</h2><p>'+esc(txt)+'</p>'+
     (pode?formCodigoHtml():'')+

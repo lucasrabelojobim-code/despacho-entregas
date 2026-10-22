@@ -12,7 +12,7 @@ function save(){return Dados.salvar();}
 /* ============ login ============ */
 function viewLogin(){
   return '<div class="login">'+
-  '<section class="login-side"><img class="logo-login" src="marca/logo.svg" alt="Arcos Jobim · Automação &amp; Software"><div class="prod">Despacho de Entregas</div>'+
+  '<section class="login-side"><img class="logo-login" src="marca/logo.svg" alt="Arcos Jobim · Automação &amp; Software"><div class="prod">'+appNome()+'</div>'+
   '<h1>Cada entrega, da separação ao retorno do motorista.</h1>'+
   '<ol class="flow"><li><b>Separado</b><span>produto conferido por código e quantidade</span></li><li><b>Saiu para entrega</b><span>horário de saída registrado</span></li><li><b>Entregue</b><span>foto e assinatura do cliente</span></li><li><b>Motorista retornou</b><span>fecha o ciclo da entrega</span></li></ol>'+
   '<p class="dim">Desvios também ficam registrados: devolvido, enviado errado, defeito, avaria e item faltando.</p></section>'+
@@ -30,6 +30,8 @@ function viewLogin(){
 function doLogin(u,p){
   Dados.entrar(u,p).then(function(r){
     if(r.erro){UI.loginMsg=r.erro;renderApp();return null;}
+    var mm=modoMsg(r.sessao);
+    if(mm){UI.loginMsg=mm;return Dados.sair().then(function(){renderApp();return null;});}
     SESSION=r.sessao;
     /* plano vencido ou bloqueado: não carrega os dados, o app mostra a tela de bloqueio */
     return Dados.statusAcesso().then(function(st){

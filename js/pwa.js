@@ -9,10 +9,21 @@ function pwaIOS(){
   var ua=navigator.userAgent||'';
   return /iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 }
+/* qual app está aberto: 'admin', 'colab' ou nada (página geral) */
+function appModo(){return window.APP_MODO||'';}
+function appNome(){var m=appModo();return m==='admin'?'ArcoRota Admin':m==='colab'?'ArcoRota Motorista':'ArcoRota';}
+/* cada app só aceita o seu tipo de usuário (a sessão é compartilhada com o navegador, então confere também ao abrir) */
+function modoMsg(s){
+  if(!s)return '';
+  if(appModo()==='admin'&&s.role!=='admin')return 'Este usuário é de motorista. Use o app ArcoRota Motorista.';
+  if(appModo()==='colab'&&s.role==='admin')return 'Este usuário é administrador. Use o app ArcoRota Admin.';
+  return '';
+}
 /* bloco da tela de login */
 function pwaHtml(){
+  if(!appModo())return '<div class="pwa-box"><b>Instalar no celular</b><span class="note">Escolha o app certo:</span><a class="btn btn-lg" href="admin.html">ArcoRota Admin · administração</a><a class="btn btn-lg" href="colaborador.html">ArcoRota Motorista · efetivados e terceirizados</a></div>';
   if(pwaStandalone()||PWA.instalado)return '';
-  if(PWA.prompt)return '<div class="pwa-box"><button class="btn btn-lg" type="button" data-act="pwa-instalar">Instalar o app no celular</button><span class="note">Fica com o ícone na tela, abre em tela cheia e recebe as atualizações sozinho.</span></div>';
+  if(PWA.prompt)return '<div class="pwa-box"><button class="btn btn-lg" type="button" data-act="pwa-instalar">Instalar o '+appNome()+' no celular</button><span class="note">Fica com o ícone na tela, abre em tela cheia e recebe as atualizações sozinho.</span></div>';
   if(pwaIOS())return '<div class="pwa-box"><b>Instalar no iPhone</b><span class="note">Abra este endereço no <b>Safari</b>, toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.</span></div>';
   return '<div class="pwa-box"><b>Instalar no Android</b><span class="note">No <b>Chrome</b>, toque no menu (três pontinhos) e em <b>Instalar aplicativo</b> ou <b>Adicionar à tela inicial</b>.</span></div>';
 }
