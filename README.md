@@ -158,3 +158,9 @@ Com o app aberto, o administrador recebe um aviso na tela (e um bipe, que pode s
 ## Entrar com digital ou rosto
 
 Em cada aparelho, o motorista (na tela inicial) ou o administrador (botão **Dados**) pode tocar em **Ativar neste aparelho** no cartão "Digital ou rosto". Depois disso o app pede a digital, o rosto ou o PIN do celular ao abrir e ao voltar depois de 3 minutos fora. A senha só é pedida de novo quando a pessoa usa **Sair**. É um bloqueio do aparelho (WebAuthn): ele não substitui a senha do banco e só aparece em celulares com biometria ou PIN configurado.
+
+## Modo sem sinal (motorista)
+
+O app do motorista guarda a última cópia dos dados no celular. Sem internet ele abre e continua funcionando (marcar saída, entregar, registrar ocorrência e abastecimento). Aparece o aviso "Sem sinal · N alterações aguardando envio" e tudo é enviado sozinho quando a internet volta (ou no próximo ciclo de atualização). As alterações ficam guardadas no aparelho mesmo se o app for fechado. Ao tocar em **Sair**, a cópia e a fila do aparelho são apagadas.
+
+Limites: o mapa precisa de internet para mostrar as ruas; se a internet voltar e outra pessoa tiver mudado o mesmo pedido nesse meio tempo, vale a alteração do motorista (a última enviada). Se as fotos forem muitas e não couberem no armazenamento do celular, elas só são enviadas se o app continuar aberto (o aviso na tela informa).

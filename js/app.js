@@ -9,7 +9,7 @@ function renderApp(){
   if(LIC&&LIC.liberado===false){closeModal();gpsDesligar();app.innerHTML=viewBloqueio()+rodape();return;}
   if(SESSION.role==='admin'){app.innerHTML=bannerPlano()+adminShell()+rodape();mountAdmin();}
   else{
-    app.innerHTML=bannerPlano()+driverShell()+rodape();
+    app.innerHTML=bannerPlano()+bannerOffline()+driverShell()+rodape();
     if(UI.drv.screen==='confirm')syncConf();else if(UI.drv.screen==='abast')dicaKm();else if(usaReal())mrDriver();
   }
 }

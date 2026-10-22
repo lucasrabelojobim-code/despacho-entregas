@@ -43,6 +43,7 @@ var DadosLocal={
     return Promise.resolve(m);
   },
   linkAcompanhamento:function(){return Promise.reject(new Error('Disponível só no modo online.'));},
+  offline:function(){return false;},semEnvio:function(){return false;},pendentes:function(){return 0;},fotosPerdidas:function(){return false;},sincronizar:function(){return Promise.resolve(false);},
   assinar:function(){return Promise.resolve();},
   urlEvid:function(v){return v;},
   posicoes:function(){try{return JSON.parse(localStorage.getItem(LSP)||'{}');}catch(e){return {};}},

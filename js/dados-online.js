@@ -3,6 +3,52 @@
    Mesma interface da camada local (DadosLocal). Veja banco/schema.sql e o README. */
 var DadosOnline=(function(){
   var sb=null, snap={colaboradores:{},entregas:{},ocorrencias:{},catalogo:{},veiculos:{},abastecimentos:{}}, fila=Promise.resolve(), tmr=null, pos={};
+  /* ---- modo sem sinal (só motorista): guarda a última cópia dos dados e as alterações que ainda não foram enviadas ---- */
+  var K_DB='arcorota-off-db',K_FILA='arcorota-off-fila',TABS_FILA=['entregas','ocorrencias','abastecimentos'];
+  var off=false,semEnvio=false,filaSemFotos=false;
+  function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}}
+  function lsSet(k,o){try{localStorage.setItem(k,JSON.stringify(o));return true;}catch(e){return false;}}
+  function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
+  function ehRede(e){var m=String((e&&e.message)||e||'');return (typeof navigator!=='undefined'&&navigator.onLine===false)||/failed to fetch|networkerror|network request|load failed|fetch failed|err_internet|timeout/i.test(m);}
+  function souMotorista(){return !!(SESSION&&SESSION.role==='driver');}
+  function pendentesPor(){
+    var r={};
+    TABS_FILA.forEach(function(t){r[t]=(DB&&DB[t]?DB[t]:[]).filter(function(o){return snap[t][String(o.id)]!==JSON.stringify(o);});});
+    return r;
+  }
+  function pendentesN(){var p=pendentesPor();return TABS_FILA.reduce(function(n,t){return n+p[t].length;},0);}
+  var CAMPOS_FOTO=['foto','assinatura','fotoOdometro','fotoNota'];
+  function persistirFila(){
+    if(!souMotorista())return;
+    var p=pendentesPor(),n=pendentesN();
+    if(!n){lsDel(K_FILA);filaSemFotos=false;return;}
+    var c=lsGet(K_DB),uid=c&&c.uid;
+    if(!lsSet(K_FILA,{uid:uid,fila:p})){
+      /* sem espaço (fotos grandes): guarda o resto das alterações sem as fotos */
+      var q=JSON.parse(JSON.stringify(p));
+      TABS_FILA.forEach(function(t){q[t].forEach(function(o){CAMPOS_FOTO.forEach(function(f){if(o[f]&&String(o[f]).indexOf('data:')===0)o[f]=null;});});});
+      lsSet(K_FILA,{uid:uid,fila:q});filaSemFotos=true;
+    }
+  }
+  function guardarCopia(d){
+    if(!souMotorista())return;
+    var c=lsGet(K_DB)||{};
+    lsSet(K_DB,{uid:c.uid,sessao:SESSION,lic:(typeof LIC!=='undefined'?LIC:null),em:new Date().toISOString(),db:d});
+  }
+  /* devolve as alterações guardadas (de uma sessão anterior sem sinal) para dentro dos dados carregados */
+  function reaplicarFila(){
+    var f=lsGet(K_FILA),c=lsGet(K_DB);
+    if(!f||!f.fila||!c||f.uid!==c.uid)return 0;
+    var n=0;
+    TABS_FILA.forEach(function(t){
+      (f.fila[t]||[]).forEach(function(o){
+        var i=DB[t].findIndex(function(x){return String(x.id)===String(o.id);});
+        if(i>=0)DB[t][i]=o;else DB[t].push(o);
+        n++;
+      });
+    });
+    return n;
+  }
   var TS={prazo:1,criadoEm:1,saidaEm:1,concluidoEm:1,retornoEm:1,em:1};
   var STR={empresa:1,veiculo:1,placa:1,telefone:1,cpf:1,matricula:1,obs:1,recebedor:1,endereco:1,codigo:1,motivo:1,usuario:1,modelo:1,combustivel:1,posto:1};
   var MAPA={
@@ -199,24 +245,47 @@ var DadosOnline=(function(){
       gravar('ocorrencias',DB.ocorrencias),
       gravar('abastecimentos',DB.abastecimentos),
       pCat
-    ]).catch(function(e){toast('Falha ao sincronizar com o banco: '+erro(e));});
+    ]).then(function(){semEnvio=false;if(!pendentesN())off=false;return true;},function(e){
+      if(ehRede(e)){off=true;}
+      else if(!semEnvio)toast('Falha ao sincronizar com o banco: '+erro(e));
+      semEnvio=true;return false;
+    });
   }
 
   return {
     modo:'online',
     restaurar:function(){
+      /* sem sinal ao abrir o app: o motorista continua com a última cópia dos dados */
+      function copiaOff(uid){
+        var c=lsGet(K_DB);
+        if(c&&c.sessao&&c.sessao.role==='driver'&&(!uid||c.uid===uid)){off=true;return c.sessao;}
+        return null;
+      }
       return cli().auth.getSession().then(function(r){
         var u=r.data&&r.data.session&&r.data.session.user;
-        if(!u)return null;
-        return perfilDe(u.id);
-      }).catch(function(){return null;});
+        if(!u)return (typeof navigator!=='undefined'&&navigator.onLine===false)?copiaOff(null):null;
+        return perfilDe(u.id).then(function(s){
+          if(s&&s.role==='driver'){var c=lsGet(K_DB)||{};if(c.uid!==u.id){lsDel(K_FILA);c={};}c.uid=u.id;c.sessao=s;lsSet(K_DB,c);}
+          return s;
+        },function(e){return ehRede(e)?copiaOff(u.id):null;});
+      }).catch(function(){return copiaOff(null);});
     },
     carregar:function(){
-      return buscar().then(function(d){DB=d;marcarSnap(d);return Promise.all([carregarPosicoes(),carregarEmpresa()]);});
+      return buscar().then(function(d){
+        DB=d;marcarSnap(d);off=false;guardarCopia(d);
+        if(souMotorista()&&reaplicarFila()){semEnvio=true;DadosOnline.salvar();}
+        return Promise.all([carregarPosicoes(),carregarEmpresa()]);
+      },function(e){
+        var c=souMotorista()&&lsGet(K_DB);
+        if(!(c&&c.db&&ehRede(e)))throw e;
+        DB=c.db;marcarSnap(DB);off=true;
+        if(reaplicarFila())semEnvio=true;
+      });
     },
     salvar:function(){
       clearTimeout(tmr);
-      tmr=setTimeout(function(){fila=fila.then(empurrar);},350);
+      tmr=setTimeout(function(){fila=fila.then(empurrar).then(persistirFila).then(function(){if(souMotorista()&&(off||semEnvio)&&typeof renderApp==='function'&&!ocupado())renderApp();});},350);
+      if(souMotorista())persistirFila();   /* já guarda no aparelho: se o app fechar antes do envio, nada se perde */
       return true;
     },
     entrar:function(u,p){
@@ -226,18 +295,35 @@ var DadosOnline=(function(){
         if(r.error)return {erro:'Usuário ou senha incorretos.'};
         return perfilDe(r.data.user.id).then(function(s){
           if(!s){return cli().auth.signOut().then(function(){return {erro:'Este usuário não tem perfil de acesso. Fale com o administrador.'};});}
+          if(s.role==='driver'){var c0=lsGet(K_DB);if(!c0||c0.uid!==r.data.user.id)lsDel(K_FILA);lsSet(K_DB,{uid:r.data.user.id,sessao:s});}
           return {sessao:s};
         });
       }).catch(function(e){return {erro:'Não foi possível entrar: '+erro(e)};});
     },
-    sair:function(){return cli().auth.signOut().catch(function(){});},
+    sair:function(){lsDel(K_DB);lsDel(K_FILA);off=false;semEnvio=false;return cli().auth.signOut().catch(function(){});},
     atualizar:function(){
-      return fila.then(buscar).then(function(d){
-        var antes=JSON.stringify([DB.entregas,DB.ocorrencias,DB.colaboradores,DB.veiculos,DB.abastecimentos]);
-        var mudou=antes!==JSON.stringify([d.entregas,d.ocorrencias,d.colaboradores,d.veiculos,d.abastecimentos]);
-        DB=d;marcarSnap(d);
-        return carregarPosicoes().then(function(){return mudou;});
-      }).catch(function(){return false;});
+      var antesEst=off+'|'+semEnvio+'|'+pendentesN();
+      function estado(){return off+'|'+semEnvio+'|'+pendentesN()!==antesEst;}
+      /* antes de trazer os dados do servidor, envia o que ficou pendente (senão ele seria apagado pela cópia nova) */
+      return fila.then(function(){return pendentesN()?empurrar():true;}).then(function(ok){
+        if(ok===false){persistirFila();return estado();}
+        return buscar().then(function(d){
+          var antes=JSON.stringify([DB.entregas,DB.ocorrencias,DB.colaboradores,DB.veiculos,DB.abastecimentos]);
+          var mudou=antes!==JSON.stringify([d.entregas,d.ocorrencias,d.colaboradores,d.veiculos,d.abastecimentos]);
+          DB=d;marcarSnap(d);off=false;semEnvio=false;guardarCopia(d);persistirFila();
+          return carregarPosicoes().then(function(){return mudou||estado();});
+        });
+      }).catch(function(e){if(ehRede(e))off=true;return estado();});
+    },
+    /* estado do modo sem sinal, para o aviso na tela do motorista */
+    offline:function(){return off;},
+    semEnvio:function(){return semEnvio;},
+    pendentes:function(){return pendentesN();},
+    fotosPerdidas:function(){return filaSemFotos;},
+    /* chamado quando o celular volta à internet */
+    sincronizar:function(){
+      fila=fila.then(function(){return pendentesN()?empurrar():true;}).then(persistirFila);
+      return fila.then(function(){return DadosOnline.atualizar();});
     },
     /* cria o login do colaborador sem derrubar a sessão do administrador */
     criarAcesso:function(c,senha){
@@ -262,6 +348,10 @@ var DadosOnline=(function(){
           throw r.error;
         }
         return lerStatus(r.data);
+      }).catch(function(e){
+        var c=lsGet(K_DB);
+        if(c&&c.lic&&ehRede(e)){off=true;return c.lic;}
+        throw e;
       });
     },
     resgatarCodigo:function(codigo){return rpc('resgatar_codigo',{p_codigo:codigo}).then(function(d){return d||{ok:false,erro:'Sem resposta do banco.'};});},
@@ -333,7 +423,7 @@ var DadosOnline=(function(){
     urlEvid:function(v){var p=caminho(v);return p===null?v:(urls[p]||null);},
     posicoes:function(){return pos;},
     enviarPosicao:function(motoristaId,lat,lng,prec){
-      return cli().from('posicoes').insert({motorista_id:motoristaId,lat:lat,lng:lng,precisao:prec==null?null:Math.round(prec)}).then(function(){});
+      return cli().from('posicoes').insert({motorista_id:motoristaId,lat:lat,lng:lng,precisao:prec==null?null:Math.round(prec)}).then(function(){},function(){});
     }
   };
 })();
