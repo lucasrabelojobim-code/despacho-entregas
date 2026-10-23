@@ -23,7 +23,8 @@ function viewLogin(){
   '<button type="button" data-act="login-demo" data-u="admin" data-p="admin123"><span><b>Administrador</b><span class="sub">Painel, entregas, colaboradores</span></span><small>admin / admin123</small></button>'+
   '<button type="button" data-act="login-demo" data-u="joao" data-p="1234"><span><b>João Pereira</b> <span class="tag tag-ef">Efetivado</span><span class="sub">Visão do motorista no celular</span></span><small>joao / 1234</small></button>'+
   '<button type="button" data-act="login-demo" data-u="carlos" data-p="1234"><span><b>Carlos Nogueira</b> <span class="tag tag-ter">Terceirizado</span><span class="sub">Transportes Rio Negro</span></span><small>carlos / 1234</small></button></div>':'<p class="note">Entre com o usuário e a senha fornecidos pela administração.</p>')+
-  pwaHtml()+'</section></div>';
+  pwaHtml()+'</section>'+
+  '<a class="login-sobre" href="sobre.html">Conheça o ArcosRotas →</a></div>';
 }
 /* ============ cadastro no 1º acesso ============ */
 var CAD={pendente:false,erro:''};

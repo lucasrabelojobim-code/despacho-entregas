@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0C1B27">
+<title>Conheça o ArcosRotas</title>
+<meta name="description" content="ArcosRotas: controle de entregas e coletas com motoristas próprios e terceirizados. Desenvolvido por Arcos Jobim · Automação & Software.">
+<link rel="icon" type="image/png" href="marca/favicon.png">
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0C1B27;color:#E6EEF5;padding:24px 16px 40px}
+main{max-width:900px;margin:0 auto}
+header{text-align:center;padding:8px 0 28px}
+.logo{height:84px}
+h1{margin:14px 0 6px;font-size:32px;line-height:1.15}
+h2{margin:36px 0 12px;font-size:22px}
+.sub{color:#9FB3C4;margin:0 auto;max-width:56ch;font-size:17px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{background:#132634;border:1px solid #23394B;border-radius:14px;padding:18px}
+.card h3{margin:0 0 6px;font-size:17px}
+.card p{margin:0;color:#C9D6E0;font-size:15px}
+.passos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;counter-reset:p}
+.passos li{background:#132634;border:1px solid #23394B;border-radius:14px;padding:16px;counter-increment:p}
+.passos li::before{content:counter(p);display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;border-radius:50%;background:#0B6BB8;font-weight:700;margin-bottom:8px}
+.passos b{display:block}
+.passos span{color:#9FB3C4;font-size:14px}
+.num{font-size:34px;font-weight:700;color:#8EC1FF;line-height:1.1}
+.est{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#F5C26B;background:#F5C26B22;border-radius:99px;padding:2px 9px;margin-bottom:8px}
+.nota{color:#9FB3C4;font-size:14px;margin-top:12px}
+.acoes{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:16px}
+a.btn{display:inline-block;padding:12px 18px;border-radius:10px;background:#0B6BB8;color:#fff;text-decoration:none;font-weight:600}
+a.btn.sec{background:transparent;border:1px solid #3A5468}
+footer{margin-top:40px;text-align:center;color:#9FB3C4;font-size:13px}
+footer b{color:#E6EEF5}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <img class="logo" src="marca/logo.svg" alt="Arcos Jobim · Automação &amp; Software">
+  <h1>ArcosRotas</h1>
+  <p class="sub">Controle de entregas e coletas, do pedido separado até o motorista voltar para a empresa. Tudo no celular, sem papel e sem ligação.</p>
+</header>
+
+<h2>Como funciona</h2>
+<ol class="passos">
+  <li><b>Separado</b><span>O produto é conferido por código e quantidade antes de sair.</span></li>
+  <li><b>Saiu para entrega</b><span>O horário de saída fica registrado e o motorista aparece no mapa.</span></li>
+  <li><b>Entregue</b><span>O motorista tira foto e pega a assinatura do cliente no celular.</span></li>
+  <li><b>Motorista retornou</b><span>Fecha o ciclo. Devolução, defeito, avaria ou item faltando ficam anotados.</span></li>
+</ol>
+
+<h2>O que melhora na empresa</h2>
+<div class="grid">
+  <section class="card"><h3>Saber onde está cada entrega</h3><p>O mapa mostra os motoristas ao vivo. Não precisa ligar para perguntar "já entregou?".</p></section>
+  <section class="card"><h3>Prova de entrega</h3><p>Foto e assinatura de cada entrega. Se o cliente disser que não recebeu, a prova está lá.</p></section>
+  <section class="card"><h3>Cliente informado</h3><p>O cliente recebe um link para acompanhar a entrega, sem precisar instalar nada.</p></section>
+  <section class="card"><h3>Problemas registrados</h3><p>Devolução, envio errado, defeito e avaria ficam com data, motorista e motivo, para corrigir a causa.</p></section>
+  <section class="card"><h3>Combustível sob controle</h3><p>Cada abastecimento com foto do painel e da nota. Dá para ver o gasto por veículo e por motorista.</p></section>
+  <section class="card"><h3>Relatórios prontos</h3><p>Entregas no prazo, atrasos e devoluções por motorista, em Excel ou PDF, com um toque.</p></section>
+  <section class="card"><h3>Funciona sem sinal</h3><p>Sem internet, o app guarda tudo no celular e envia sozinho quando o sinal voltar.</p></section>
+  <section class="card"><h3>Seguro</h3><p>Cada motorista vê só as próprias entregas. Fotos protegidas e entrada com digital ou rosto.</p></section>
+</div>
+
+<h2>Na prática</h2>
+<p class="nota" style="margin-top:0">Exemplo de uma empresa com <b>50 entregas por dia</b>, <b>8 motoristas</b> e <b>12 veículos</b>.</p>
+<div class="grid">
+  <section class="card"><span class="est">Estimativa</span><div class="num">até 1h40</div><p>por dia sem ligações para saber das entregas (2 ligações de 1 minuto por entrega).</p></section>
+  <section class="card"><span class="est">Estimativa</span><div class="num">~1.100</div><p>comprovantes de entrega por mês, com foto e assinatura, sem papel (22 dias úteis).</p></section>
+  <section class="card"><span class="est">Estimativa</span><div class="num">12</div><p>veículos com consumo acompanhado. Um gasto fora do normal aparece no relatório em vez de passar despercebido.</p></section>
+</div>
+<p class="nota">Esses números são exemplos calculados, não resultados medidos. Depois que a empresa usar o app, os números reais aparecem no painel do administrador.</p>
+
+<h2>Dois aplicativos</h2>
+<div class="grid">
+  <section class="card"><h3>ArcosRotas Admin</h3><p>Para quem organiza: cria entregas, acompanha o mapa, vê ocorrências, combustível e relatórios.</p></section>
+  <section class="card"><h3>ArcosRotas Motorista</h3><p>Para efetivados e terceirizados: vê suas entregas, registra foto, assinatura e abastecimentos.</p></section>
+</div>
+<div class="acoes">
+  <a class="btn" href="instalar.html">Instalar os apps</a>
+  <a class="btn sec" href="admin.html">Entrar no Admin</a>
+  <a class="btn sec" href="colaborador.html">Entrar como Motorista</a>
+</div>
+
+<footer>Desenvolvido por <b>Arcos Jobim</b> · Automação &amp; Software</footer>
+</main>
+</body>
+</html>
