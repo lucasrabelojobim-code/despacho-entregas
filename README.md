@@ -127,12 +127,12 @@ Fluxo: **Conferir** (mostra quantos registros serão apagados) → digitar **APA
 
 Para funcionar, rode **uma vez** `banco/06-limpar-historico.sql` no Supabase (SQL Editor → Run) antes de publicar os arquivos novos. O banco recusa qualquer usuário que não seja desenvolvedor.
 
-## App no celular: ArcoRota Admin e ArcoRota Motorista
+## App no celular: ArcosRotas Admin e ArcosRotas Motorista
 
-O sistema chama-se **ArcoRota** e tem dois apps instaláveis (PWA), com o mesmo site e o mesmo banco:
+O sistema chama-se **ArcosRotas** e tem dois apps instaláveis (PWA), com o mesmo site e o mesmo banco:
 
-- **ArcoRota Admin** (`admin.html`, faixa azul no ícone): administrador e desenvolvedor.
-- **ArcoRota Motorista** (`colaborador.html`, faixa verde): colaboradores efetivados e terceirizados.
+- **ArcosRotas Admin** (`admin.html`, faixa azul no ícone): administrador e desenvolvedor.
+- **ArcosRotas Motorista** (`colaborador.html`, faixa verde): colaboradores efetivados e terceirizados.
 
 Cada app só aceita o seu tipo de usuário. A página geral (`index.html`) continua funcionando e mostra os dois botões de instalação.
 

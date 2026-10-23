@@ -1,7 +1,7 @@
 {
   "id": "./colaborador.html",
-  "name": "ArcoRota Motorista",
-  "short_name": "ArcoRota Mot",
+  "name": "ArcosRotas Motorista",
+  "short_name": "ArcosRotas Mot",
   "description": "App do motorista: entregas, coletas, GPS e abastecimento.",
   "lang": "pt-BR",
   "start_url": "./colaborador.html",

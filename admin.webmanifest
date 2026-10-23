@@ -1,7 +1,7 @@
 {
   "id": "./admin.html",
-  "name": "ArcoRota Admin",
-  "short_name": "ArcoRota Adm",
+  "name": "ArcosRotas Admin",
+  "short_name": "ArcosRotas Adm",
   "description": "Painel de administração: entregas, coletas, mapa e histórico.",
   "lang": "pt-BR",
   "start_url": "./admin.html",

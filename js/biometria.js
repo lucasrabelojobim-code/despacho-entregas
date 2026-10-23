@@ -21,8 +21,8 @@ function bioDetectar(){
 }
 function bioAtivar(){
   return navigator.credentials.create({publicKey:{
-    challenge:bioRand(32),rp:{name:'ArcoRota'},
-    user:{id:bioRand(16),name:'arcorota',displayName:'ArcoRota'},
+    challenge:bioRand(32),rp:{name:'ArcosRotas'},
+    user:{id:bioRand(16),name:'arcorota',displayName:'ArcosRotas'},
     pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
     authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},
     timeout:60000,attestation:'none'}}).then(function(c){
@@ -46,7 +46,7 @@ function bioCard(){
     '<button class="btn btn-sm" style="align-self:flex-start" data-act="'+(on?'bio-desativar':'bio-ativar')+'">'+(on?'Desativar':'Ativar neste aparelho')+'</button></section>';
 }
 function viewBioLock(){
-  return '<div class="login"><section class="login-side"><img class="logo-login" src="marca/logo.svg" alt="Arcos Jobim · Automação &amp; Software"><div class="prod">'+esc(typeof appNome==='function'?appNome():'ArcoRota')+'</div>'+
+  return '<div class="login"><section class="login-side"><img class="logo-login" src="marca/logo.svg" alt="Arcos Jobim · Automação &amp; Software"><div class="prod">'+esc(typeof appNome==='function'?appNome():'ArcosRotas')+'</div>'+
     '<h1>App bloqueado.</h1><p class="dim">Use a digital, o rosto ou o PIN do celular para continuar.</p></section>'+
     '<section class="login-form"><h2>Desbloquear</h2><div class="err" id="bio-err" role="alert">'+esc(BIO.erro||'')+'</div>'+
     '<button class="btn btn-primary btn-lg" type="button" data-act="bio-unlock">Desbloquear com digital ou rosto</button>'+

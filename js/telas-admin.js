@@ -3,7 +3,7 @@
 function adminShell(){
   var tabs=[['dashboard','Painel'],['mapa','Mapa'],['entregas','Entregas'],['colaboradores','Colaboradores'],['ocorrencias','Ocorrências'],['veiculos','Veículos'],['abastecimentos','Abastecimentos'],['historico','Histórico']];
   if(SESSION.dev&&Dados.modo==='online')tabs.push(['desenvolvedor','Desenvolvedor']);
-  return '<div class="band top"><div class="band-in"><div class="top-row"><div class="brand sm">'+mark()+'<span>ArcoRota</span></div>'+
+  return '<div class="band top"><div class="band-in"><div class="top-row"><div class="brand sm">'+mark()+'<span>ArcosRotas</span></div>'+
   '<nav class="tabs" aria-label="Seções">'+tabs.map(function(t){return '<button class="tab" data-act="nav" data-v="'+t[0]+'"'+(UI.view===t[0]?' aria-current="page"':'')+'>'+t[1]+'</button>';}).join('')+'</nav>'+
   '<div class="top-r">'+(DB.demo?'<span class="pill p-neutral">Dados de exemplo</span>':'')+'<button class="btn btn-sm" data-act="dados">Dados</button><button class="btn btn-sm" data-act="logout">Sair</button></div></div></div></div><main class="main" id="main"></main>';
 }

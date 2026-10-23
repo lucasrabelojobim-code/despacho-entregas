@@ -11,17 +11,17 @@ function pwaIOS(){
 }
 /* qual app está aberto: 'admin', 'colab' ou nada (página geral) */
 function appModo(){return window.APP_MODO||'';}
-function appNome(){var m=appModo();return m==='admin'?'ArcoRota Admin':m==='colab'?'ArcoRota Motorista':'ArcoRota';}
+function appNome(){var m=appModo();return m==='admin'?'ArcosRotas Admin':m==='colab'?'ArcosRotas Motorista':'ArcosRotas';}
 /* cada app só aceita o seu tipo de usuário (a sessão é compartilhada com o navegador, então confere também ao abrir) */
 function modoMsg(s){
   if(!s)return '';
-  if(appModo()==='admin'&&s.role!=='admin')return 'Este usuário é de motorista. Use o app ArcoRota Motorista.';
-  if(appModo()==='colab'&&s.role==='admin')return 'Este usuário é administrador. Use o app ArcoRota Admin.';
+  if(appModo()==='admin'&&s.role!=='admin')return 'Este usuário é de motorista. Use o app ArcosRotas Motorista.';
+  if(appModo()==='colab'&&s.role==='admin')return 'Este usuário é administrador. Use o app ArcosRotas Admin.';
   return '';
 }
 /* bloco da tela de login */
 function pwaHtml(){
-  if(!appModo())return '<div class="pwa-box"><b>Instalar no celular</b><span class="note">Escolha o app certo:</span><a class="btn btn-lg" href="admin.html">ArcoRota Admin · administração</a><a class="btn btn-lg" href="colaborador.html">ArcoRota Motorista · efetivados e terceirizados</a><a class="note" href="instalar.html">Ver QR codes para instalar</a></div>';
+  if(!appModo())return '<div class="pwa-box"><b>Instalar no celular</b><span class="note">Escolha o app certo:</span><a class="btn btn-lg" href="admin.html">ArcosRotas Admin · administração</a><a class="btn btn-lg" href="colaborador.html">ArcosRotas Motorista · efetivados e terceirizados</a><a class="note" href="instalar.html">Ver QR codes para instalar</a></div>';
   if(pwaStandalone()||PWA.instalado)return '';
   if(PWA.prompt)return '<div class="pwa-box"><button class="btn btn-lg" type="button" data-act="pwa-instalar">Instalar o '+appNome()+' no celular</button><span class="note">Fica com o ícone na tela, abre em tela cheia e recebe as atualizações sozinho.</span></div>';
   if(pwaIOS())return '<div class="pwa-box"><b>Instalar no iPhone</b><span class="note">Abra este endereço no <b>Safari</b>, toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.</span></div>';

@@ -13,9 +13,7 @@ function save(){return Dados.salvar();}
 function viewLogin(){
   return '<div class="login">'+
   '<section class="login-side"><img class="logo-login" src="marca/logo.svg" alt="Arcos Jobim · Automação &amp; Software"><div class="prod">'+appNome()+'</div>'+
-  '<h1>Cada entrega, da separação ao retorno do motorista.</h1>'+
-  '<ol class="flow"><li><b>Separado</b><span>produto conferido por código e quantidade</span></li><li><b>Saiu para entrega</b><span>horário de saída registrado</span></li><li><b>Entregue</b><span>foto e assinatura do cliente</span></li><li><b>Motorista retornou</b><span>fecha o ciclo da entrega</span></li></ol>'+
-  '<p class="dim">Desvios também ficam registrados: devolvido, enviado errado, defeito, avaria e item faltando.</p></section>'+
+  '</section>'+
   '<section class="login-form"><h2>Entrar</h2>'+
   '<form id="f-login" autocomplete="off" class="dlg-b" style="padding:0"><div class="field"><label for="lg-u">Usuário</label><input id="lg-u" name="u" autocapitalize="none" required value="'+esc(UI.prefill)+'"></div>'+
   '<div class="field"><label for="lg-p">Senha</label><input id="lg-p" name="p" type="password" required></div>'+

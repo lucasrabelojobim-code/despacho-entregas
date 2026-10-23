@@ -91,7 +91,7 @@ var CAB_OC=['Dia','Pedido','Tipo','Código','Motivo','Motorista'];
 var CAB_AB=['Data e hora','Motorista','Veículo','Km','Litros','Valor (R$)','Tanque cheio','Observação'];
 function bold(l){return l.map(function(t){return {v:t,b:true};});}
 function xlsxDoRelatorio(r){
-  var res=[[{v:'ArcoRota · Relatório de entregas e coletas',b:true}],['Período',fmtDia(r.de)+' a '+fmtDia(r.ate)],['Filtros',r.filtros.join(' · ')],['Gerado em',xDT(new Date().toISOString())],[],bold(['Indicador','Valor'])]
+  var res=[[{v:'ArcosRotas · Relatório de entregas e coletas',b:true}],['Período',fmtDia(r.de)+' a '+fmtDia(r.ate)],['Filtros',r.filtros.join(' · ')],['Gerado em',xDT(new Date().toISOString())],[],bold(['Indicador','Valor'])]
     .concat(r.resumo,[[],bold(['Motorista','Vínculo','Empresa','Entregas','Coletas','Concluídos','No prazo','Rota média','Atrasados','Devolvidos'])],
       r.mot.map(function(m){return [m.nome,m.vinculo,m.empresa,m.ent,m.col,m.concl,m.prazo,m.rota,m.atras,m.dev];}));
   return xlsxBlob([
@@ -119,13 +119,13 @@ function pdfHtml(r){
     '.kpis{display:flex;flex-wrap:wrap;gap:8px}.k{border:1px solid #bbb;border-radius:6px;padding:6px 10px;min-width:110px}.k b{display:block;font-size:16px}.k span{color:#555;font-size:10px}'+
     'table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:3px 5px;text-align:left;vertical-align:top}th{background:#E4EEF8}tr{page-break-inside:avoid}.v{text-align:center;color:#777}'+
     'footer{margin-top:14px;color:#666;font-size:10px}</style></head><body>'+
-    '<header>'+(logo?'<img src="'+esc(logo)+'" alt="">':'')+'<div><h1>ArcoRota · Relatório de entregas e coletas</h1><div class="sub">Período: <b>'+fmtDia(r.de)+' a '+fmtDia(r.ate)+'</b> · '+esc(r.filtros.join(' · '))+'</div><div class="sub">Gerado em '+xDT(new Date().toISOString())+'</div></div></header>'+
+    '<header>'+(logo?'<img src="'+esc(logo)+'" alt="">':'')+'<div><h1>ArcosRotas · Relatório de entregas e coletas</h1><div class="sub">Período: <b>'+fmtDia(r.de)+' a '+fmtDia(r.ate)+'</b> · '+esc(r.filtros.join(' · '))+'</div><div class="sub">Gerado em '+xDT(new Date().toISOString())+'</div></div></header>'+
     '<div class="kpis">'+r.resumo.map(function(x){return '<div class="k"><b>'+esc(x[1])+'</b><span>'+esc(x[0])+'</span></div>';}).join('')+'</div>'+
     '<h2>Desempenho por motorista</h2>'+tb(['Motorista','Vínculo','Entregas','Coletas','Concluídos','No prazo','Rota média','Atrasados','Devolvidos'],r.mot.map(function(m){return [m.nome,m.vinculo+(m.empresa?' · '+m.empresa:''),m.ent,m.col,m.concl,m.prazo,m.rota,m.atras,m.dev];}),'Sem pedidos no período')+
     '<h2>Entregas e coletas ('+r.ents.length+')</h2>'+tb(['Nº','Tipo','Dia','Cliente','Motorista','Situação','Prazo','Saída','Conclusão','Rota (min)'],entsCurto,'Sem pedidos no período')+
     (r.ocs.length?'<h2>Ocorrências ('+r.ocs.length+')</h2>'+tb(CAB_OC,r.ocs,''):'')+
     (r.abs.length?'<h2>Abastecimentos ('+r.abs.length+')</h2>'+tb(CAB_AB,r.abs,''):'')+
-    '<footer>ArcoRota · Desenvolvido por Arcos Jobim · Automação &amp; Software</footer></body></html>';
+    '<footer>ArcosRotas · Desenvolvido por Arcos Jobim · Automação &amp; Software</footer></body></html>';
 }
 function imprimirRelatorio(r){
   var fr=document.createElement('iframe');fr.setAttribute('aria-hidden','true');fr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
