@@ -125,7 +125,7 @@ function driverMapHtml(c,hl,conf){
     if(conf)return '';
     var idx=hl?r.stops.findIndex(function(e){return e.id===hl;}):-1,sel=idx>=0?r.stops[idx]:null;
     var cap=sel?'<div><b>Parada '+(idx+1)+' · '+esc(sel.cliente)+'</b><div class="muted">'+esc(sel.endereco)+'</div><div class="mono" style="margin-top:2px">Prazo '+hhmm(sel.prazo)+'</div></div>':'<span class="note">Toque numa parada para ver detalhes e abrir a rota no GPS do celular.</span>';
-    return '<section class="dcard" id="drv-map"><div class="row" style="justify-content:space-between"><h3>Sua rota</h3><span class="row"><span class="note">'+r.stops.length+(r.stops.length===1?' parada':' paradas')+'</span>'+seletorMini()+'</span></div><div id="rmap-drv" class="rmap"></div><p class="note" id="mr-aviso" hidden>Não foi possível carregar o mapa. Verifique a conexão com a internet.</p>'+cap+'</section>';
+    return '<section class="dcard" id="drv-map"><div class="row" style="justify-content:space-between"><h3>Sua rota</h3><span class="row"><span class="note">'+r.stops.length+(r.stops.length===1?' parada':' paradas')+'</span>'+seletorMini()+'</span></div><div id="rmap-drv" class="rmap"></div><p class="note" id="mr-aviso" hidden>Não foi possível carregar o mapa. Verifique a conexão com a internet.</p>'+cap+linkRotaCompleta(r)+'</section>';
   }
   var svg=mapSvg([r],{vb:cropVb(r),renderW:360,labels:false,hl:hl,interactive:!conf,stopAct:!conf,you:true,label:'Mapa da sua rota'});
   if(conf)return '<div>'+svg+mapLegend(false)+'</div>';

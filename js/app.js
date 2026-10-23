@@ -70,8 +70,9 @@ function boot(){
       return st.liberado===false?null:conferirCadastro().then(function(){return Dados.carregar();});
     });
   }).then(function(){
-    renderApp();alertasChecar();iniciarAtualizacao();
-    if(SESSION&&bioAtivo())bioTrava();
+    var voltouNav=navVoltou();
+    drvRetomar();renderApp();alertasChecar();iniciarAtualizacao();
+    if(SESSION&&bioAtivo()&&!voltouNav)bioTrava();
   }).catch(function(err){
     app.innerHTML='<div style="padding:24px"><b>Não foi possível iniciar.</b><p class="muted">'+esc(err&&err.message)+'</p></div>';
   });

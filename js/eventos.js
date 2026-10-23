@@ -12,7 +12,7 @@ document.addEventListener('click',function(ev){
     case 'login-demo':doLogin(t.dataset.u,t.dataset.p);break;
     case 'map-modo':UI.mapa=t.dataset.p;MR.view=null;renderApp();break;
     case 'gps-on':gpsLigar();break;
-    case 'gps-off':gpsDesligar();renderApp();break;
+    case 'gps-off':gpsDesligar();drvGuardar({gps:false});renderApp();break;
     case 'geo-buscar':mrBuscarEndereco();break;
     case 'ent-loc':openLocalizarEntrega(n);break;
     case 'geo-pick':escolherGeo(n);break;

@@ -80,7 +80,7 @@ function doLogin(u,p){
   }).catch(function(e){SESSION=null;LIC=null;UI.loginMsg='Erro ao entrar: '+((e&&e.message)||e);renderApp();});
 }
 function logout(){
-  gpsDesligar();alertasZerar();
+  gpsDesligar();drvEsquecer();alertasZerar();
   LIC=null;CAD={pendente:false,erro:''};
   var fim=Dados.sair();
   SESSION=null;saveSession();

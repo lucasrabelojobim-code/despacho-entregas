@@ -78,6 +78,6 @@ function bioAcao(a){
 /* travar de novo ao voltar depois de alguns minutos fora do app */
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){BIO.saiu=Date.now();return;}
-  if(BIO.saiu&&Date.now()-BIO.saiu>BIO.MIN*60000&&SESSION&&!BIO.travado&&bioAtivo())bioTrava();
+  if(BIO.saiu&&Date.now()-BIO.saiu>BIO.MIN*60000&&SESSION&&!BIO.travado&&bioAtivo()&&!navVoltou())bioTrava();
 });
 bioDetectar();

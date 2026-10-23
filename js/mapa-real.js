@@ -209,6 +209,7 @@ function mrDriver(){
   var el=document.getElementById('rmap-drv');if(!el)return;
   var c=colab(SESSION.id),r=routeOf(c,'driver');if(!r)return;
   matar('drv');MR.voce=null;
+  drvGuardar({hl:UI.drv.hl||null});
   var emp=empLL(),m=novoMapa('rmap-drv',emp,13),b=[emp];
   MR.drv=m;
   L.marker(emp,{icon:icone('<div class="mk-emp">E</div>','',26)}).addTo(m).bindPopup('<b>Empresa</b>');
@@ -220,7 +221,7 @@ function mrDriver(){
     var p=llOf(e);b.push(p);
     var mk=L.marker(p,{icon:icone('<div class="mk-stop'+(isConcl(e)?' done':'')+(ehColeta(e)?' col':'')+(UI.drv.hl===e.id?' hl':'')+'" style="--c:'+cor+'">'+(i+1)+'</div>','',24)}).addTo(m);
     mk.bindPopup('<b>Parada '+(i+1)+': '+esc(e.cliente)+'</b><br>'+esc(e.endereco)+'<br>Prazo '+hhmm(e.prazo)+
-      '<br><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination='+p[0]+','+p[1]+'">Abrir rota no GPS do celular</a>');
+      '<br><a class="nav-gps" data-id="'+e.id+'" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+p[0]+','+p[1]+'">Abrir rota no GPS do celular</a>');
     if(UI.drv.hl===e.id)mk.openPopup();
   });
   var vp=GPS.pos?[GPS.pos.lat,GPS.pos.lng]:toLL(r.pos);b.push(vp);
@@ -323,11 +324,14 @@ function gpsLigar(){
       }
     }
   },function(err){
-    GPS.ativo=false;GPS.watch=null;
-    GPS.erro=err&&err.code===1?'Permissão negada. Libere a localização nas configurações do navegador.':'Não foi possível obter a localização.';
+    /* sem sinal ou tempo esgotado (comum com o app em segundo plano): o GPS continua tentando sozinho */
+    if(!(err&&err.code===1)){var el=document.getElementById('gps-info');if(el)el.textContent='Procurando sinal…';return;}
+    if(GPS.watch!=null)navigator.geolocation.clearWatch(GPS.watch);
+    GPS.ativo=false;GPS.watch=null;drvGuardar({gps:false});
+    GPS.erro='Permissão negada. Libere a localização nas configurações do navegador.';
     renderApp();
   },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
-  GPS.ativo=true;renderApp();
+  GPS.ativo=true;drvGuardar({gps:true});renderApp();
 }
 function gpsDesligar(){
   if(GPS.watch!=null&&navigator.geolocation)navigator.geolocation.clearWatch(GPS.watch);
@@ -340,3 +344,54 @@ function gpsCard(){
   }
   return '<section class="dcard"><b>Localização</b><span class="muted">Ative para a empresa acompanhar sua rota no mapa. O celular vai pedir permissão. A posição é enviada somente enquanto você tem entregas em rota e esta tela está aberta.</span>'+(GPS.erro?'<span class="err">'+esc(GPS.erro)+'</span>':'')+'<button class="btn btn-primary" data-act="gps-on">Ativar localização</button></section>';
 }
+
+/* ---- continuar de onde parou ----
+   Ao abrir o Maps, o Android pode fechar o ArcosRotas para liberar memória. Este celular guarda se o GPS
+   estava ligado, a parada escolhida e quando o motorista saiu para navegar; ao voltar, o app retoma tudo. */
+var K_DRV='arcorota-drv-estado';
+function drvEstado(){try{return JSON.parse(localStorage.getItem(K_DRV)||'{}')||{};}catch(e){return {};}}
+function drvGuardar(mud){
+  if(!SESSION||SESSION.role!=='driver')return;
+  var s=drvEstado();if(s.id!==SESSION.id)s={id:SESSION.id};
+  for(var k in mud)s[k]=mud[k];
+  try{localStorage.setItem(K_DRV,JSON.stringify(s));}catch(e){}
+}
+function drvEsquecer(){try{localStorage.removeItem(K_DRV);}catch(e){}}
+function drvRetomar(){
+  if(!SESSION||SESSION.role!=='driver')return;
+  var s=drvEstado();if(s.id!==SESSION.id)return;
+  if(s.hl&&!UI.drv.hl)UI.drv.hl=s.hl;
+  if(s.gps&&GPS.watch==null&&gpsDisponivel())gpsLigar();   /* a permissão já foi dada: não pergunta de novo */
+}
+/* saiu pelo botão de GPS há menos de 2 h: a biometria não trava na volta (vale uma vez) */
+function navVoltou(){
+  var s=drvEstado();
+  if(SESSION&&s.id===SESSION.id&&s.nav&&Date.now()-s.nav<2*3600000){drvGuardar({nav:0});return true;}
+  return false;
+}
+/* botão com todas as paradas que faltam, na ordem (o Google Maps aceita até 10 de uma vez) */
+function llTxt(e){return (+e.lat).toFixed(6)+','+(+e.lng).toFixed(6);}
+function linkRotaCompleta(r){
+  var fal=r.stops.filter(function(e){return !isConcl(e)&&temLocal(e);});
+  if(!fal.length)return '';
+  var ok=fal.slice(0,10),ult=ok[ok.length-1],meio=ok.slice(0,-1);
+  var url='https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+llTxt(ult)+(meio.length?'&waypoints='+encodeURIComponent(meio.map(llTxt).join('|')):'');
+  var obs=fal.length>10?'O GPS recebe as 10 primeiras paradas. Depois delas, toque de novo para o restante.':'';
+  var sem=r.stops.filter(function(e){return !isConcl(e)&&!temLocal(e);}).length;
+  if(sem)obs+=(obs?' ':'')+sem+(sem===1?' parada sem local no mapa ficou fora.':' paradas sem local no mapa ficaram fora.');
+  return '<a class="btn btn-primary nav-gps" style="margin-top:8px;text-align:center" target="_blank" rel="noopener" href="'+url+'">Abrir rota completa no GPS</a>'+(obs?'<span class="note">'+obs+'</span>':'');
+}
+/* clique em "abrir no GPS": marca a saída e a parada (fase de captura, pois o balão do mapa barra o clique) */
+document.addEventListener('click',function(ev){
+  var a=ev.target.closest&&ev.target.closest('a.nav-gps');if(!a)return;
+  var m={nav:Date.now()};if(a.dataset.id)m.hl=/^\d+$/.test(a.dataset.id)?+a.dataset.id:a.dataset.id;
+  if(m.hl!=null)UI.drv.hl=m.hl;
+  drvGuardar(m);
+},true);
+/* voltou do Maps sem o app ter sido fechado: religa o GPS se preciso e redesenha a rota */
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden||!SESSION||SESSION.role!=='driver')return;
+  var antes=GPS.watch;
+  drvRetomar();
+  if(GPS.watch===antes&&usaReal()&&UI.drv.screen==='home'&&!ocupado()&&document.getElementById('rmap-drv'))mrDriver();
+});
