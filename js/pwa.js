@@ -22,7 +22,7 @@ function modoMsg(s){
 /* bloco da tela de login */
 function pwaHtml(){
   if(!appModo())return '<div class="pwa-box"><b>Instalar no celular</b><span class="note">Escolha o app certo:</span><a class="btn btn-lg" href="admin.html">ArcosRotas Admin · administração</a><a class="btn btn-lg" href="colaborador.html">ArcosRotas Motorista · efetivados e terceirizados</a><a class="note" href="instalar.html">Ver QR codes para instalar</a></div>';
-  if(pwaStandalone()||PWA.instalado)return '';
+  if(pwaStandalone()||PWA.instalado||apkNativo())return '';   /* dentro do APK já está instalado */
   if(PWA.prompt)return '<div class="pwa-box"><button class="btn btn-lg" type="button" data-act="pwa-instalar">Instalar o '+appNome()+' no celular</button><span class="note">Fica com o ícone na tela, abre em tela cheia e recebe as atualizações sozinho.</span></div>';
   if(pwaIOS())return '<div class="pwa-box"><b>Instalar no iPhone</b><span class="note">Abra este endereço no <b>Safari</b>, toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.</span></div>';
   return '<div class="pwa-box"><b>Instalar no Android</b><span class="note">No <b>Chrome</b>, toque no menu (três pontinhos) e em <b>Instalar aplicativo</b> ou <b>Adicionar à tela inicial</b>.</span></div>';

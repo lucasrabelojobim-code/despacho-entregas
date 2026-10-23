@@ -305,44 +305,88 @@ function mrBuscarEndereco(){
   });
 }
 
-/* ---- GPS do celular ---- */
-function gpsDisponivel(){return CONFIG.gps!==false&&!!navigator.geolocation;}
+/* ---- GPS do celular ----
+   No navegador (PWA) o GPS só funciona com o app aberto. Dentro do APK do motorista (Capacitor),
+   usa o plugin de segundo plano: o GPS segue com o Maps aberto ou a tela apagada, com um aviso fixo
+   na barra do celular. */
+function apkNativo(){var C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform());}
+function pluginApk(nome){
+  if(!apkNativo())return null;
+  var C=window.Capacitor;
+  try{return (C.Plugins&&C.Plugins[nome])||(C.registerPlugin&&C.registerPlugin(nome))||null;}catch(e){return null;}
+}
+function gpsDisponivel(){return CONFIG.gps!==false&&(!!pluginApk('BackgroundGeolocation')||!!navigator.geolocation);}
+function gpsPosicao(lat,lng,prec){
+  GPS.ativo=true;GPS.erro='';
+  GPS.pos={lat:lat,lng:lng,prec:prec};
+  mrAtualizaVoce();
+  var el=document.getElementById('gps-info');if(el)el.textContent='Precisão de '+Math.round(GPS.pos.prec)+' m';
+  var agora=Date.now();
+  if(SESSION&&SESSION.role==='driver'&&agora-GPS.ultimoEnvio>=(CONFIG.gpsIntervaloSeg||20)*1000){
+    var c=colab(SESSION.id);
+    /* só envia a posição enquanto houver entrega em rota */
+    if(c&&DB.entregas.some(function(e){return e.motoristaId===c.id&&e.status==='em_rota';})){
+      GPS.ultimoEnvio=agora;Dados.enviarPosicao(c.id,GPS.pos.lat,GPS.pos.lng,GPS.pos.prec);
+    }
+  }
+}
+function gpsNegado(msg){
+  gpsDesligar();drvGuardar({gps:false});
+  GPS.erro=msg;renderApp();
+}
 function gpsLigar(){
   if(!gpsDisponivel()){GPS.erro='Este aparelho não oferece localização.';renderApp();return;}
   GPS.erro='';
-  GPS.watch=navigator.geolocation.watchPosition(function(p){
-    GPS.ativo=true;GPS.erro='';
-    GPS.pos={lat:p.coords.latitude,lng:p.coords.longitude,prec:p.coords.accuracy};
-    mrAtualizaVoce();
-    var el=document.getElementById('gps-info');if(el)el.textContent='Precisão de '+Math.round(GPS.pos.prec)+' m';
-    var agora=Date.now();
-    if(SESSION&&SESSION.role==='driver'&&agora-GPS.ultimoEnvio>=(CONFIG.gpsIntervaloSeg||20)*1000){
-      var c=colab(SESSION.id);
-      /* só envia a posição enquanto houver entrega em rota */
-      if(c&&DB.entregas.some(function(e){return e.motoristaId===c.id&&e.status==='em_rota';})){
-        GPS.ultimoEnvio=agora;Dados.enviarPosicao(c.id,GPS.pos.lat,GPS.pos.lng,GPS.pos.prec);
-      }
-    }
-  },function(err){
-    /* sem sinal ou tempo esgotado (comum com o app em segundo plano): o GPS continua tentando sozinho */
-    if(!(err&&err.code===1)){var el=document.getElementById('gps-info');if(el)el.textContent='Procurando sinal…';return;}
-    if(GPS.watch!=null)navigator.geolocation.clearWatch(GPS.watch);
-    GPS.ativo=false;GPS.watch=null;drvGuardar({gps:false});
-    GPS.erro='Permissão negada. Libere a localização nas configurações do navegador.';
-    renderApp();
-  },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+  var bg=pluginApk('BackgroundGeolocation');
+  if(bg){
+    var pedido=GPS.pedido={};GPS.watch='apk';
+    /* Android 13+: permissão para mostrar o aviso fixo "usando sua localização" */
+    var notif=pluginApk('LocalNotifications'),antes=notif?notif.requestPermissions().catch(function(){}):Promise.resolve();
+    antes.then(function(){
+      if(GPS.pedido!==pedido)return null;
+      return bg.addWatcher({
+        backgroundTitle:'ArcosRotas',
+        backgroundMessage:'ArcosRotas está usando sua localização para a empresa acompanhar a rota.',
+        requestPermissions:true,stale:false,distanceFilter:15
+      },function(loc,err){
+        if(err){
+          if(err.code==='NOT_AUTHORIZED')gpsNegado('Permissão negada. Abra as configurações do app e permita a localização.');
+          return;
+        }
+        if(loc)gpsPosicao(loc.latitude,loc.longitude,loc.accuracy);
+      });
+    }).then(function(id){
+      if(id==null)return;
+      if(GPS.pedido!==pedido){bg.removeWatcher({id:id}).catch(function(){});return;}
+      GPS.idApk=id;
+    }).catch(function(){gpsNegado('Não foi possível ligar a localização.');});
+  }else{
+    GPS.watch=navigator.geolocation.watchPosition(function(p){
+      gpsPosicao(p.coords.latitude,p.coords.longitude,p.coords.accuracy);
+    },function(err){
+      /* sem sinal ou tempo esgotado (comum com o app em segundo plano): o GPS continua tentando sozinho */
+      if(!(err&&err.code===1)){var el=document.getElementById('gps-info');if(el)el.textContent='Procurando sinal…';return;}
+      gpsNegado('Permissão negada. Libere a localização nas configurações do navegador.');
+    },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+  }
   GPS.ativo=true;drvGuardar({gps:true});renderApp();
 }
 function gpsDesligar(){
-  if(GPS.watch!=null&&navigator.geolocation)navigator.geolocation.clearWatch(GPS.watch);
+  if(GPS.watch==='apk'){
+    GPS.pedido=null;
+    var bg=pluginApk('BackgroundGeolocation');
+    if(bg&&GPS.idApk!=null)bg.removeWatcher({id:GPS.idApk}).catch(function(){});
+    GPS.idApk=null;
+  }else if(GPS.watch!=null&&navigator.geolocation)navigator.geolocation.clearWatch(GPS.watch);
   GPS.watch=null;GPS.ativo=false;GPS.pos=null;GPS.ultimoEnvio=0;
 }
 function gpsCard(){
   if(!gpsDisponivel())return '';
+  var quando=apkNativo()?'mesmo com o GPS do celular aberto ou a tela apagada (não feche o app na lista de apps abertos)':'e esta tela está aberta';
   if(GPS.ativo){
-    return '<section class="dcard"><div class="row" style="justify-content:space-between"><b>Localização ativa</b><span class="pill p-good"><i></i>GPS</span></div><span class="note" id="gps-info">'+(GPS.pos?'Precisão de '+Math.round(GPS.pos.prec)+' m':'Procurando sinal…')+'</span><span class="note">A empresa vê sua posição só enquanto você tem entregas em rota e esta tela está aberta.</span><button class="btn btn-sm" style="align-self:flex-start" data-act="gps-off">Desativar</button></section>';
+    return '<section class="dcard"><div class="row" style="justify-content:space-between"><b>Localização ativa</b><span class="pill p-good"><i></i>GPS</span></div><span class="note" id="gps-info">'+(GPS.pos?'Precisão de '+Math.round(GPS.pos.prec)+' m':'Procurando sinal…')+'</span><span class="note">A empresa vê sua posição só enquanto você tem entregas em rota '+quando+'.</span><button class="btn btn-sm" style="align-self:flex-start" data-act="gps-off">Desativar</button></section>';
   }
-  return '<section class="dcard"><b>Localização</b><span class="muted">Ative para a empresa acompanhar sua rota no mapa. O celular vai pedir permissão. A posição é enviada somente enquanto você tem entregas em rota e esta tela está aberta.</span>'+(GPS.erro?'<span class="err">'+esc(GPS.erro)+'</span>':'')+'<button class="btn btn-primary" data-act="gps-on">Ativar localização</button></section>';
+  return '<section class="dcard"><b>Localização</b><span class="muted">Ative para a empresa acompanhar sua rota no mapa. O celular vai pedir permissão. A posição é enviada somente enquanto você tem entregas em rota '+quando+'.</span>'+(GPS.erro?'<span class="err">'+esc(GPS.erro)+'</span>':'')+'<button class="btn btn-primary" data-act="gps-on">Ativar localização</button></section>';
 }
 
 /* ---- continuar de onde parou ----

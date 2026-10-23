@@ -1,0 +1,12 @@
+{
+  "appId": "com.arcosjobim.arcosrotas.motorista",
+  "appName": "ArcosRotas Motorista",
+  "webDir": "www",
+  "server": {
+    "url": "https://lucasrabelojobim-code.github.io/despacho-entregas/colaborador.html",
+    "errorPath": "index.html"
+  },
+  "android": {
+    "useLegacyBridge": true
+  }
+}
