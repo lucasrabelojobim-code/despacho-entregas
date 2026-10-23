@@ -1,7 +1,7 @@
 'use strict';
 /* Camada de dados LOCAL: tudo fica no navegador (localStorage). */
 var LS='despacho-entregas-v1', LSS='despacho-sessao-v1', LSP='despacho-posicoes-v1';
-var DB=null, SESSION=null, EMPRESA=null;   /* EMPRESA: local da empresa definido pelo desenvolvedor (modo online) */
+var DB=null, SESSION=null, EMPRESA=null, CADMOT={};   /* CADMOT: cadastro feito pelo motorista no 1º acesso, por colaborador (modo online) */   /* EMPRESA: local da empresa definido pelo desenvolvedor (modo online) */
 
 function load(){
   try{var raw=localStorage.getItem(LS);if(raw){DB=JSON.parse(raw);if(DB&&DB.v===1&&!(DB.demo&&DB.seedDay!==todayKey())){garantirCombustivel(DB);return;}}}catch(e){}
@@ -30,6 +30,7 @@ var DadosLocal={
   atualizar:function(){return Promise.resolve(false);},
   criarAcesso:function(c){return Promise.resolve(c);},
   statusAcesso:function(){return Promise.resolve({liberado:true,motivo:'ok',plano:'full',dev:false,local:true});},
+  meuCadastro:function(){return Promise.resolve({dispensado:true});},
   /* histórico: no modo local tudo já está em DB */
   historico:function(de,ate){
     return Promise.resolve({

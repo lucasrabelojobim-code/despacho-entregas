@@ -164,6 +164,14 @@ var DadosOnline=(function(){
       EMPRESA={lat:Number(r.data.lat),lng:Number(r.data.lng),endereco:r.data.endereco||''};
     },function(){});
   }
+  /* cadastros que os motoristas fizeram no 1º acesso (só o administrador recebe) */
+  function carregarCadMot(){
+    if(souMotorista())return;
+    return cli().rpc('listar_cadastros_motoristas').then(function(r){
+      if(r.error)return;
+      var m={};(r.data||[]).forEach(function(c){if(c.colaborador_id)m[c.colaborador_id]=c;});CADMOT=m;
+    },function(){});
+  }
   /* o Supabase devolve no máximo 1000 linhas por pedido: busca em páginas */
   function paginar(mk){
     var tudo=[];
@@ -274,7 +282,7 @@ var DadosOnline=(function(){
       return buscar().then(function(d){
         DB=d;marcarSnap(d);off=false;guardarCopia(d);
         if(souMotorista()&&reaplicarFila()){semEnvio=true;DadosOnline.salvar();}
-        return Promise.all([carregarPosicoes(),carregarEmpresa()]);
+        return Promise.all([carregarPosicoes(),carregarEmpresa(),carregarCadMot()]);
       },function(e){
         var c=souMotorista()&&lsGet(K_DB);
         if(!(c&&c.db&&ehRede(e)))throw e;
@@ -354,6 +362,15 @@ var DadosOnline=(function(){
         throw e;
       });
     },
+    /* cadastro do 1º acesso: sem o arquivo 08 no banco ou sem sinal, não trava o app */
+    meuCadastro:function(){
+      return cli().rpc('meu_cadastro').then(function(r){
+        if(r.error)return {dispensado:true};
+        return r.data||null;
+      },function(){return {dispensado:true};});
+    },
+    salvarCadastro:function(d){return rpc('salvar_meu_cadastro',{p_nome:d.nome,p_email:d.email,p_empresa:d.empresa||'',p_vinculo:d.vinculo||null});},
+    devCadastros:function(){return rpc('dev_listar_cadastros').then(function(d){return d||[];});},
     resgatarCodigo:function(codigo){return rpc('resgatar_codigo',{p_codigo:codigo}).then(function(d){return d||{ok:false,erro:'Sem resposta do banco.'};});},
     /* ===== só o desenvolvedor (o banco confere de novo em cada chamada) ===== */
     devLicenca:function(){return cli().from('licenca').select('*').eq('id',1).maybeSingle().then(function(r){falhou(r);return r.data;});},

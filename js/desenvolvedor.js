@@ -9,8 +9,8 @@ function msgErro(e){return (e&&e.message)||String(e);}
 function dtHora(iso){return iso?new Date(iso).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'—';}
 
 function viewDev(){
-  var abas=[['plano','Plano'],['codigos','Códigos'],['usuarios','Usuários'],['empresa','Empresa'],['limpar','Limpar histórico']];
-  return '<div class="page-h"><div><h1>Desenvolvedor</h1><p>Área restrita: plano da empresa, códigos de acesso, usuários e local da empresa.</p></div>'+
+  var abas=[['plano','Plano'],['codigos','Códigos'],['usuarios','Usuários'],['cadastros','Cadastros'],['empresa','Empresa'],['limpar','Limpar histórico']];
+  return '<div class="page-h"><div><h1>Desenvolvedor</h1><p>Área restrita: plano da empresa, códigos de acesso, usuários, cadastros e local da empresa.</p></div>'+
     '<div class="seg" role="group" aria-label="Seção">'+abas.map(function(a){return '<button data-act="dev-aba" data-p="'+a[0]+'" aria-pressed="'+(UI.dev.aba===a[0])+'">'+a[1]+'</button>';}).join('')+'</div></div>'+
     '<div id="dev-corpo"></div>';
 }
@@ -22,6 +22,7 @@ function fillDev(){
   el.innerHTML='<div class="empty">Carregando…</div>';
   var p=aba==='plano'?Dados.devLicenca().then(devPlanoHtml):
         aba==='codigos'?Dados.devCodigos().then(devCodigosHtml):
+        aba==='cadastros'?Dados.devCadastros().then(devCadastrosHtml):
         Dados.devUsuarios().then(function(l){DEV.usuarios=l;return devUsuariosHtml(l);});
   p.then(function(h){var e=$('#dev-corpo');if(n===DEV.seq&&e)e.innerHTML=h;})
    .catch(function(e){var x=$('#dev-corpo');if(n===DEV.seq&&x)x.innerHTML='<div class="empty">Não foi possível carregar: '+esc(msgErro(e))+'</div>';});
@@ -109,6 +110,22 @@ function devUsuariosHtml(lista){
     '<div class="scroll"><table class="tbl" style="min-width:760px"><thead><tr><th>Usuário</th><th>Papel</th><th>Situação</th><th>Último acesso</th><th></th></tr></thead><tbody>'+
     (rows||'<tr><td colspan="5" class="empty">Nenhum usuário.</td></tr>')+'</tbody></table></div>'+
     '<p class="note" style="padding:8px 16px 14px">Novos motoristas continuam sendo criados na aba Colaboradores. Bloquear vale na hora. Excluir o acesso mantém o histórico de entregas.</p></section>';
+}
+/* ---------- aba Cadastros (dados do 1º acesso: só o desenvolvedor vê) ---------- */
+function devCadastrosHtml(lista){
+  function tabela(tit,l,adm){
+    var rows=l.map(function(c){
+      var login=String(c.login||'—').replace('@'+CONFIG.dominioLogin,'');
+      var emp=adm?esc(c.empresa):(c.vinculo==='Terceirizado'?'<span class="tag tag-ter">Terceirizado</span><span class="sub">'+esc(c.empresa)+'</span>':'<span class="tag tag-ef">Efetivado</span>');
+      return '<tr><td><b>'+esc(c.nome_completo)+'</b><span class="sub mono">'+esc(login)+'</span></td><td>'+emp+'</td><td><a href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a></td><td class="mono">'+esc(dtHora(c.criado_em))+'</td></tr>';
+    }).join('');
+    return '<section class="panel" style="margin-bottom:14px"><div class="panel-h"><h2>'+tit+' ('+l.length+')</h2></div>'+
+      '<div class="scroll"><table class="tbl" style="min-width:640px"><thead><tr><th>Nome completo</th><th>'+(adm?'Empresa':'Vínculo')+'</th><th>Email</th><th>Cadastrado em</th></tr></thead><tbody>'+
+      (rows||'<tr><td colspan="4" class="empty">Ninguém cadastrado ainda.</td></tr>')+'</tbody></table></div></section>';
+  }
+  return tabela('Administradores',lista.filter(function(c){return c.papel==='admin';}),true)+
+    tabela('Motoristas',lista.filter(function(c){return c.papel==='motorista';}),false)+
+    '<p class="note" style="padding:0 4px">Cada pessoa preenche no primeiro acesso. Os dados dos administradores só aparecem aqui.</p>';
 }
 function devUsuario(id){return DEV.usuarios.find(function(u){return u.auth_id===id;});}
 function devNome(u){return u?(u.nome||String(u.email||'').replace('@'+CONFIG.dominioLogin,'')):'';}

@@ -59,6 +59,7 @@ document.addEventListener('input',function(ev){
   if(t.dataset&&t.dataset.bind){var p=t.dataset.bind.split('.');UI[p[0]][p[1]]=t.value;fillLista();return;}
   if(t.list&&t.name==='codigo'){var p2=DB.catalogo.find(function(x){return x[0]===t.value.trim();});if(p2){var ds=t.closest('.item-row').querySelector('[name=desc]');if(!ds.value)ds.value=p2[1];}}
   if(t.id==='cf-tipo'){$('#cf-emp').hidden=(t.value!=='Terceirizado');}
+  if(t.id==='cd-v'){var et=$('#cd-et');$('#cd-terc').hidden=(t.value!=='Terceirizado');et.required=(t.value==='Terceirizado');}
   if(t.id==='ab-v')dicaKm();
   if(t.id==='l-conf'){var bo=$('#l-ok');if(bo)bo.disabled=(t.value.trim()!=='APAGAR');}
   if(t.name==='res')syncConf();
@@ -77,6 +78,7 @@ document.addEventListener('change',function(ev){
 document.addEventListener('submit',function(ev){
   var f=ev.target;ev.preventDefault();
   if(f.id==='f-login')doLogin(fv(f,'u'),fv(f,'p'));
+  else if(f.id==='f-cad')salvarCadastro(f);
   else if(f.id==='f-ent')saveEntrega(f,(ev.submitter&&ev.submitter.dataset.mode)||'sep');
   else if(f.id==='f-loc')saveLocalizarEntrega(f);
   else if(f.id==='f-col')saveColab(f);
