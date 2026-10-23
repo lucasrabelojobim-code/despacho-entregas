@@ -19,13 +19,19 @@ function modoMsg(s){
   if(appModo()==='colab'&&s.role==='admin')return 'Este usuário é administrador. Use o app ArcosRotas Admin.';
   return '';
 }
+/* APK para Android (gerado pelo GitHub: .github/workflows/apk-motorista.yml) */
+var APK_BASE='https://github.com/lucasrabelojobim-code/despacho-entregas/releases/latest/download/';
+function apkLink(modo){
+  var mot=modo!=='admin';
+  return '<a class="btn btn-lg btn-primary" href="'+APK_BASE+(mot?'ArcosRotas-Motorista.apk':'ArcosRotas-Admin.apk')+'">Baixar app '+(mot?'do Motorista':'Admin')+' para Android (APK)</a>';
+}
 /* bloco da tela de login */
 function pwaHtml(){
-  if(!appModo())return '<div class="pwa-box"><b>Instalar no celular</b><span class="note">Escolha o app certo:</span><a class="btn btn-lg" href="admin.html">ArcosRotas Admin · administração</a><a class="btn btn-lg" href="colaborador.html">ArcosRotas Motorista · efetivados e terceirizados</a><a class="note" href="instalar.html">Ver QR codes para instalar</a></div>';
+  if(!appModo())return '<div class="pwa-box"><b>Instalar no celular</b><span class="note">Escolha o app certo:</span><a class="btn btn-lg" href="admin.html">ArcosRotas Admin · administração</a><a class="btn btn-lg" href="colaborador.html">ArcosRotas Motorista · efetivados e terceirizados</a>'+(pwaIOS()?'':apkLink('admin')+apkLink('colab'))+'<a class="note" href="instalar.html">Ver QR codes para instalar</a></div>';
   if(pwaStandalone()||PWA.instalado||apkNativo())return '';   /* dentro do APK já está instalado */
-  if(PWA.prompt)return '<div class="pwa-box"><button class="btn btn-lg" type="button" data-act="pwa-instalar">Instalar o '+appNome()+' no celular</button><span class="note">Fica com o ícone na tela, abre em tela cheia e recebe as atualizações sozinho.</span></div>';
+  if(PWA.prompt)return '<div class="pwa-box"><button class="btn btn-lg" type="button" data-act="pwa-instalar">Instalar o '+appNome()+' no celular</button><span class="note">Fica com o ícone na tela, abre em tela cheia e recebe as atualizações sozinho.</span>'+apkLink(appModo())+'<span class="note">O APK é o app completo para Android'+(appModo()==='colab'?', com GPS funcionando mesmo com o Maps aberto':'')+'.</span></div>';
   if(pwaIOS())return '<div class="pwa-box"><b>Instalar no iPhone</b><span class="note">Abra este endereço no <b>Safari</b>, toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.</span></div>';
-  return '<div class="pwa-box"><b>Instalar no Android</b><span class="note">No <b>Chrome</b>, toque no menu (três pontinhos) e em <b>Instalar aplicativo</b> ou <b>Adicionar à tela inicial</b>.</span></div>';
+  return '<div class="pwa-box"><b>Instalar no Android</b>'+apkLink(appModo())+'<span class="note">Baixe e toque no arquivo para instalar. Se o celular pedir, permita instalar apps desta fonte.'+(appModo()==='colab'?' Com o APK, o GPS continua funcionando com o Maps aberto ou a tela apagada.':'')+'</span></div>';
 }
 function pwaAcao(a){
   if(a!=='pwa-instalar')return false;

@@ -356,6 +356,8 @@ input[type=checkbox]{accent-color:var(--accent)}
 
 /* app instalável */
 .pwa-box{display:flex;flex-direction:column;gap:6px;margin-top:18px;padding:12px 14px;border:1px dashed var(--line,#2A3E50);border-radius:10px}
+.pwa-box a.btn{white-space:normal;text-align:center;text-decoration:none;color:inherit;padding:8px 14px;line-height:1.3}
+.pwa-box a.btn-primary{color:var(--accent-ink)}
 .pwa-novo{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:200;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-radius:10px;background:#0B6BB8;color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:420px;margin-inline:auto}
 .pwa-novo .btn{background:#fff;color:#0B6BB8;border-color:#fff}
 
