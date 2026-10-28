@@ -198,7 +198,7 @@ function histDesenhar(){
     ['ok','c-good','Concluído',function(l){return l.filter(function(e){return e.status==='entregue';}).length;},'var(--good)'],
     ['pr','c-warn','Com problema',function(l){return l.filter(function(e){return e.status==='entregue_problema';}).length;},'var(--warn)'],
     ['ru','c-bad','Devolvido / errado',function(l){return l.filter(function(e){return e.status==='devolvido'||e.status==='enviado_errado';}).length;},'var(--bad)'],
-    ['ab','c-open','Em aberto',function(l){return l.filter(function(e){return !isConcl(e);}).length;},'var(--neutral-soft)']
+    ['ab','c-open','Em aberto',function(l){return l.filter(function(e){return !isConcl(e)&&!cancelada(e);}).length;},'var(--neutral-soft)']
   ];
   var tip=[
     ['en','c-ent','Entregas',function(l){return l.filter(function(e){return !ehColeta(e);}).length;},'var(--accent)'],

@@ -3,10 +3,13 @@
 /* ============ regras e indicadores ============ */
 function colab(id){return DB.colaboradores.find(function(c){return c.id===id;});}
 function isConcl(e){return CONCL.indexOf(e.status)>=0;}
-function late(e){return isConcl(e)?(!!e.concluidoEm&&new Date(e.concluidoEm)>new Date(e.prazo)):new Date()>new Date(e.prazo);}
+/* cancelada: fica no histórico, mas não conta nos números nem aparece para o motorista */
+function cancelada(e){return e.status==='cancelada';}
+function late(e){if(cancelada(e))return false;return isConcl(e)?(!!e.concluidoEm&&new Date(e.concluidoEm)>new Date(e.prazo)):new Date()>new Date(e.prazo);}
 function inPeriod(e,p){if(p==='hoje')return e.dia===todayKey();if(p==='todos')return true;return e.dia>=dayKey(Date.now()-6*86400000);}
 function totalUn(e){return sum(e.itens.map(function(i){return i.qtd;}));}
 function calc(list){
+  list=list.filter(function(e){return !cancelada(e);});
   var desp=list.filter(function(e){return e.status!=='separado';});
   var concl=list.filter(isConcl);
   var cnt=function(s){return list.filter(function(e){return e.status===s;}).length;};
@@ -26,7 +29,7 @@ function garantirCombustivel(d){
   if(!d.seq.vei)d.seq.vei=d.veiculos.reduce(function(m,v){return v.id>m?v.id:m;},0);
 }
 /* entrega ou coleta: o fluxo é o mesmo, muda o nome */
-var COL_LBL={separado:'Agendada',em_rota:'Em rota',entregue:'Coletada',entregue_problema:'Coletada com problema',devolvido:'Não coletada',enviado_errado:'Coleta errada'};
+var COL_LBL={separado:'Agendada',em_rota:'Em rota',entregue:'Coletada',entregue_problema:'Coletada com problema',devolvido:'Não coletada',enviado_errado:'Coleta errada',cancelada:'Cancelada'};
 function opDe(e){return e&&e.tipo==='coleta'?'coleta':'entrega';}
 function ehColeta(e){return opDe(e)==='coleta';}
 function stL(e){return ehColeta(e)?(COL_LBL[e.status]||STATUS[e.status].l):STATUS[e.status].l;}

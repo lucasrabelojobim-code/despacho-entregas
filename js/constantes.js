@@ -6,7 +6,8 @@ var STATUS={
   entregue:{l:'Entregue',c:'good'},
   entregue_problema:{l:'Entregue com problema',c:'warn'},
   devolvido:{l:'Devolvido',c:'bad'},
-  enviado_errado:{l:'Enviado errado',c:'mag'}
+  enviado_errado:{l:'Enviado errado',c:'mag'},
+  cancelada:{l:'Cancelada',c:'neutral'}
 };
 var CONCL=['entregue','entregue_problema','devolvido','enviado_errado'];
 var TIPOS_OC={defeito:'Produto com defeito',avaria:'Avaria no transporte',falta:'Item faltando',devolvido:'Devolvido',enviado_errado:'Enviado errado'};

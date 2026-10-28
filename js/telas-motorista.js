@@ -5,7 +5,7 @@ function driverShell(){
   var head='<div class="band top dhead"><div class="band-in"><div class="top-row">'+mark()+'<div><b style="font:600 22px/1 var(--font-display)">Olá, '+esc(c.nome.split(' ')[0])+'</b><div class="row" style="margin-top:4px">'+tagTipo(c)+(c.tipo==='Terceirizado'?'<span class="note">'+esc(c.empresa)+'</span>':'')+(SESSION.via==='link'?'<span class="note">acesso por link</span>':'')+'</div></div><div class="top-r"><button class="btn btn-sm" data-act="logout">Sair</button></div></div></div></div>';
   return head+(UI.drv.screen==='confirm'?viewConfirm(c):UI.drv.screen==='abast'?viewAbast(c):viewDrvHome(c));
 }
-function drvList(c){return DB.entregas.filter(function(e){return e.motoristaId===c.id&&(e.dia===todayKey()||!isConcl(e));}).sort(function(a,b){return a.prazo.localeCompare(b.prazo);});}
+function drvList(c){return DB.entregas.filter(function(e){return e.motoristaId===c.id&&!cancelada(e)&&(e.dia===todayKey()||!isConcl(e));}).sort(function(a,b){return a.prazo.localeCompare(b.prazo);});}
 function dCard(e){
   var itens='<div class="itl">'+e.itens.map(function(i){return '<div><span class="mono">'+esc(i.codigo)+'</span><span>'+esc(i.desc)+'</span><b style="margin-left:auto">'+i.qtd+'</b></div>';}).join('')+'</div>';
   var col=ehColeta(e);
@@ -76,6 +76,7 @@ function readImage(file){
 }
 function finishConf(form){
   var e=entById(+form.dataset.id),err=$('#conf-err'),res=fres(form);
+  if(cancelada(e)){err.textContent=(ehColeta(e)?'Esta coleta':'Esta entrega')+' foi cancelada pela empresa.';return;}
   var itens=e.itens.map(function(it,ix){var v=parseInt(fv(form,'q'+ix),10);return {codigo:it.codigo,desc:it.desc,qtd:it.qtd,qtdEntregue:isNaN(v)?0:Math.max(0,Math.min(it.qtd,v))};});
   var ok=(res==='entregue'||res==='problema');
   if(res==='entregue'&&itens.some(function(i){return i.qtdEntregue!==i.qtd;})){err.textContent='A quantidade conferida é diferente da prevista. Escolha a opção "com problema".';return;}

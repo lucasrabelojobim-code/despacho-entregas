@@ -9,6 +9,7 @@ function acDur(min){min=Math.max(1,Math.round(min));return min<60?min+' min':Mat
 function acTitulo(r){return r.tipo==='coleta'?'Sua coleta':'Sua entrega';}
 function acEstado(r){
   var col=r.tipo==='coleta',s=r.status;
+  if(s==='cancelada')return {t:col?'Coleta cancelada':'Pedido cancelado',c:'bad',passo:0};
   if(s==='entregue')return {t:col?'Coletado com sucesso':'Entregue com sucesso',c:'ok',passo:3};
   if(s==='entregue_problema')return {t:col?'Coleta concluída com ocorrência':'Entregue com ocorrência',c:'warn',passo:3};
   if(s==='devolvido')return {t:col?'Não foi possível coletar':'Não foi possível entregar',c:'bad',passo:3};
@@ -72,8 +73,8 @@ function acTela(r){
     '<div class="card"><div class="big '+e.c+'">'+acEsc(e.t)+'</div>'+
     (emRota?'<div class="big" id="eta" style="margin-top:10px;font-size:28px"></div>':'')+
     (r.motorista&&emRota?'<p class="note" style="margin:8px 0 0">Motorista: '+acEsc(r.motorista)+'</p>':'')+
-    (r.concluido_em?'<p class="note" style="margin:8px 0 0">Concluído às '+acHora(r.concluido_em)+'</p>':'')+
-    acPassos(r,e)+'</div>';
+    (r.concluido_em?'<p class="note" style="margin:8px 0 0">'+(r.status==='cancelada'?'Cancelado às ':'Concluído às ')+acHora(r.concluido_em)+'</p>':'')+
+    (r.status==='cancelada'?'<p class="note" style="margin:8px 0 0">Em caso de dúvida, fale com a empresa.</p>':acPassos(r,e))+'</div>';
   var querMapa=r.destino_lat!=null&&r.status!=='devolvido'&&r.status!=='enviado_errado'&&!r.concluido_em;
   h+='<p class="note">'+(querMapa?(emRota?(r.pos_lat==null?'Aguardando o sinal do motorista… ':''):'A posição do motorista aparece no mapa quando ele sair. '):'')+'Esta página atualiza sozinha.</p>';
   acPinta(h);

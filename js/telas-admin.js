@@ -153,8 +153,8 @@ function openEntregaView(id){
   var e=entById(id);if(!e)return;
   var col=ehColeta(e),editavel=naBase(e);
   var m=colab(e.motoristaId),ocs=DB.ocorrencias.filter(function(o){return o.entregaId===id;});
-  var c=isConcl(e),fl=c?stL(e):(col?'Coleta':'Entrega');
-  var tone=e.status==='devolvido'?'bad':e.status==='entregue_problema'?'warn':e.status==='enviado_errado'?'mag':'';
+  var c=isConcl(e),canc=cancelada(e),fl=c||canc?stL(e):(col?'Coleta':'Entrega');
+  var tone=canc?'bad':e.status==='devolvido'?'bad':e.status==='entregue_problema'?'warn':e.status==='enviado_errado'?'mag':'';
   function st(l,t,cls){return '<div class="st'+(t?' done '+(cls||''):'')+'"><b>'+l+'</b><span>'+(t?hhmm(t):'pendente')+'</span></div>';}
   var tl='<div class="tl">'+st('Separado',e.criadoEm)+st(col?'Saiu para coleta':'Saiu para entrega',e.saidaEm)+st(fl,e.concluidoEm,tone)+st('Motorista retornou',e.retornoEm)+'</div>';
   var dur=[];if(e.saidaEm&&e.concluidoEm)dur.push('Rota: '+fmtDur(mins(e.saidaEm,e.concluidoEm)));if(e.concluidoEm&&e.retornoEm)dur.push('Volta: '+fmtDur(mins(e.concluidoEm,e.retornoEm)));
@@ -162,8 +162,9 @@ function openEntregaView(id){
   function ev(v,img){v=v?Dados.urlEvid(v):v;if(v&&String(v).indexOf('data:')===0)return '<img class="ev" alt="'+img+'" src="'+v+'">';if(v&&/^https:\/\//.test(String(v)))return '<a href="'+esc(v)+'" target="_blank" rel="noopener"><img class="ev" alt="'+img+'" src="'+esc(v)+'"></a>';if(v==='exemplo')return '<div class="ph">'+img+' registrada (exemplo)</div>';return '<div class="ph">Sem '+img.toLowerCase()+'</div>';}
   var ocH=ocs.length?'<div><div class="lbl" style="margin-bottom:6px">Ocorrências</div>'+ocs.map(function(o){return '<div class="li" style="padding:8px 0"><div><span class="pill p-'+(o.tipo==='devolvido'?'bad':o.tipo==='enviado_errado'?'mag':'warn')+'"><i></i>'+TIPOS_OC[o.tipo]+'</span><span class="sub">'+(o.codigo?esc(o.codigo)+' · ':'')+esc(o.motivo)+'</span></div><span class="mono muted">'+hhmm(o.em)+'</span></div>';}).join('')+'</div>':'';
   var act='';
-  if(!editavel){}
+  if(!editavel||canc){}
   else{
+  if(!c)act+='<button class="btn" data-act="ent-edit" data-id="'+id+'">Editar</button><button class="btn btn-danger" data-act="ent-cancel" data-id="'+id+'">Cancelar '+(col?'coleta':'entrega')+'</button>';
   if(e.status==='separado')act+='<button class="btn" data-act="adm-saida" data-id="'+id+'">Registrar saída agora</button>';
   if(e.status==='em_rota')act+='<button class="btn" data-act="adm-entregue" data-id="'+id+'">'+(col?'Marcar coletada':'Marcar entregue')+'</button><button class="btn btn-danger" data-act="adm-devolvido" data-id="'+id+'">Marcar devolvido</button>';
   if(c&&!e.retornoEm)act+='<button class="btn" data-act="adm-retorno" data-id="'+id+'">Registrar retorno do motorista</button>';
@@ -181,29 +182,44 @@ function entById(id){return DB.entregas.find(function(x){return x.id===id;})||hi
 function naBase(e){return DB.entregas.indexOf(e)>=0;}
 function afterChange(id){save();renderApp();if(id)openEntrega(id);}
 
-function openNovaEntrega(){
+/* id vazio: nova entrega. Com id: edita uma entrega ainda não concluída (mesmo formulário, já preenchido) */
+function openNovaEntrega(id){
+  var e=id?entById(id):null;if(id&&(!e||isConcl(e)||cancelada(e)))return;
   var d=new Date(Date.now()+3*3600000);if(d.getDate()!==new Date().getDate())d=new Date();var pz=pad(d.getHours())+':'+pad(d.getMinutes());
+  if(e&&e.prazo){var d2=new Date(e.prazo);pz=pad(d2.getHours())+':'+pad(d2.getMinutes());}
+  function sel(v,cur){return v===cur?' selected':'';}
   var ativos=DB.colaboradores.filter(function(c){return c.ativo!==false;});
-  function grp(t){return '<optgroup label="'+t+'s">'+ativos.filter(function(c){return c.tipo===t;}).map(function(c){return '<option value="'+c.id+'">'+esc(c.nome)+(c.empresa?' · '+esc(c.empresa):'')+'</option>';}).join('')+'</optgroup>';}
-  openModal(mh('Nova entrega ou coleta','Informe os itens por código e quantidade.')+
-  '<form id="f-ent" class="dlg-b"><div class="form-grid"><div class="field"><label for="ne-op">Tipo</label><select id="ne-op" name="op"><option value="entrega">Entrega (levar ao cliente)</option><option value="coleta">Coleta (buscar com o cliente)</option></select></div><div class="field"><label for="ne-c">Cliente</label><input id="ne-c" name="cliente" required autofocus></div><div class="field"><label for="ne-e">Endereço</label><input id="ne-e" name="endereco"></div>'+
-  '<div class="field"><label for="ne-m">Motorista</label><select id="ne-m" name="mot" required>'+grp('Efetivado')+grp('Terceirizado')+'</select></div><div class="field"><label for="ne-p">Prazo (hoje)</label><input id="ne-p" name="prazo" type="time" value="'+pz+'" required></div></div>'+
+  function grp(t){return '<optgroup label="'+t+'s">'+ativos.filter(function(c){return c.tipo===t;}).map(function(c){return '<option value="'+c.id+'"'+(e?sel(c.id,e.motoristaId):'')+'>'+esc(c.nome)+(c.empresa?' · '+esc(c.empresa):'')+'</option>';}).join('')+'</optgroup>';}
+  /* motorista inativo que já estava na entrega continua aparecendo na lista */
+  var mInat=e&&!ativos.some(function(c){return c.id===e.motoristaId;})&&colab(e.motoristaId);
+  openModal(mh(e?'Editar '+(ehColeta(e)?'coleta':'entrega')+' #'+e.id:'Nova entrega ou coleta',e?'Altere o que precisar e salve.':'Informe os itens por código e quantidade.')+
+  '<form id="f-ent" class="dlg-b"'+(e?' data-id="'+e.id+'"':'')+'><div class="form-grid"><div class="field"><label for="ne-op">Tipo</label><select id="ne-op" name="op"><option value="entrega">Entrega (levar ao cliente)</option><option value="coleta"'+(e&&ehColeta(e)?' selected':'')+'>Coleta (buscar com o cliente)</option></select></div><div class="field"><label for="ne-c">Cliente</label><input id="ne-c" name="cliente" required autofocus value="'+(e?esc(e.cliente):'')+'"></div><div class="field"><label for="ne-e">Endereço</label><input id="ne-e" name="endereco" value="'+(e?esc(e.endereco||''):'')+'"></div>'+
+  '<div class="field"><label for="ne-m">Motorista</label><select id="ne-m" name="mot" required>'+(mInat?'<option value="'+mInat.id+'" selected>'+esc(mInat.nome)+' (inativo)</option>':'')+grp('Efetivado')+grp('Terceirizado')+'</select></div><div class="field"><label for="ne-p">Prazo'+(e&&e.dia!==todayKey()?' ('+esc(e.dia.split('-').reverse().join('/'))+')':' (hoje)')+'</label><input id="ne-p" name="prazo" type="time" value="'+pz+'" required></div></div>'+
   '<div><div class="lbl" style="margin-bottom:6px">Local da entrega no mapa (opcional)</div>'+pickMapHtml()+'<p class="note" id="pick-note">Clique no mapa para marcar o local. Sem marcação, usamos o local do cliente cadastrado.</p><input type="hidden" name="px" id="ne-x"><input type="hidden" name="py" id="ne-y"><input type="hidden" name="plat" id="ne-lat"><input type="hidden" name="plng" id="ne-lng"></div>'+
-  '<div><div class="lbl" style="margin-bottom:6px">Itens (código, descrição, quantidade)</div><div id="itens">'+itemRow()+'</div><button type="button" class="btn btn-sm" data-act="add-item">Adicionar item</button></div>'+
-  '<div class="field"><label for="ne-o">Observações</label><textarea id="ne-o" name="obs"></textarea></div>'+
+  '<div><div class="lbl" style="margin-bottom:6px">Itens (código, descrição, quantidade)</div><div id="itens">'+(e&&e.itens.length?e.itens.map(itemRow).join(''):itemRow())+'</div><button type="button" class="btn btn-sm" data-act="add-item">Adicionar item</button></div>'+
+  '<div class="field"><label for="ne-o">Observações</label><textarea id="ne-o" name="obs">'+(e?esc(e.obs||''):'')+'</textarea></div>'+
   '<datalist id="dl-cat">'+DB.catalogo.map(function(p){return '<option value="'+esc(p[0])+'">'+esc(p[1])+'</option>';}).join('')+'</datalist>'+
-  '<div class="err" id="ne-err" role="alert"></div><div class="dlg-f"><button class="btn" type="button" data-act="close">Cancelar</button><button class="btn" type="submit" data-mode="sep">Salvar sem despachar</button><button class="btn btn-primary" type="submit" data-mode="rota">Salvar e despachar</button></div></form>');
-  if(usaReal())mrPick();
+  '<div class="err" id="ne-err" role="alert"></div><div class="dlg-f">'+(e?'<button class="btn" type="button" data-act="open-ent" data-id="'+e.id+'">Voltar</button><button class="btn btn-primary" type="submit" data-mode="edit">Salvar alterações</button>':'<button class="btn" type="button" data-act="close">Fechar</button><button class="btn" type="submit" data-mode="sep">Salvar sem despachar</button><button class="btn btn-primary" type="submit" data-mode="rota">Salvar e despachar</button>')+'</div></form>');
+  if(usaReal()){
+    mrPick();
+    if(e&&e.lat!=null&&e.lng!=null&&MR.marcarPick){MR.marcarPick([e.lat,e.lng]);MR.pick.setView([e.lat,e.lng],15);}
+  }else if(e&&e.x!=null){$('#ne-x').value=e.x;$('#ne-y').value=e.y;}
 }
-function itemRow(){return '<div class="item-row"><input name="codigo" list="dl-cat" placeholder="Código" aria-label="Código"><input name="desc" placeholder="Descrição" aria-label="Descrição"><input name="qtd" type="number" min="1" value="1" aria-label="Quantidade"><button type="button" class="btn" data-act="rm-item" aria-label="Remover item">×</button></div>';}
+function itemRow(i){i=i&&i.codigo?i:null;return '<div class="item-row"><input name="codigo" list="dl-cat" placeholder="Código" aria-label="Código" value="'+(i?esc(i.codigo):'')+'"><input name="desc" placeholder="Descrição" aria-label="Descrição" value="'+(i?esc(i.desc):'')+'"><input name="qtd" type="number" min="1" value="'+(i?i.qtd:1)+'" aria-label="Quantidade"><button type="button" class="btn" data-act="rm-item" aria-label="Remover item">×</button></div>';}
 function saveEntrega(form,mode){
   var err=$('#ne-err');
   var rows=[].slice.call(form.querySelectorAll('.item-row')),itens=[];
   rows.forEach(function(r){var cd=r.querySelector('[name=codigo]').value.trim(),ds=r.querySelector('[name=desc]').value.trim(),q=parseInt(r.querySelector('[name=qtd]').value,10);if(cd&&q>0)itens.push({codigo:cd,desc:ds||cd,qtd:q,qtdEntregue:q});});
   if(!itens.length){err.textContent='Adicione ao menos um item com código e quantidade.';return;}
-  var hm=fv(form,'prazo').split(':'),pz=new Date();pz.setHours(+hm[0],+hm[1],0,0);
+  var e0=form.dataset.id?entById(+form.dataset.id):null;
+  if(e0&&(isConcl(e0)||cancelada(e0))){err.textContent='Esta entrega já foi concluída ou cancelada e não pode mais ser alterada.';return;}
+  var hm=fv(form,'prazo').split(':'),pz=e0&&e0.prazo?new Date(e0.prazo):new Date();pz.setHours(+hm[0],+hm[1],0,0);
   itens.forEach(function(i){if(!DB.catalogo.some(function(p){return p[0]===i.codigo;}))DB.catalogo.push([i.codigo,i.desc]);});
   var lat=fv(form,'plat')?+fv(form,'plat'):null,lng=fv(form,'plng')?+fv(form,'plng'):null,px=fv(form,'px')?+fv(form,'px'):null,py=fv(form,'py')?+fv(form,'py'):null;
+  /* na edição: se o endereço mudou e o local no mapa continua o antigo, procura o local de novo */
+  if(e0&&!form.dataset.geo&&lat!=null&&e0.lat!=null&&Math.abs(lat-e0.lat)<1e-5&&Math.abs(lng-e0.lng)<1e-5&&fv(form,'endereco').trim()!==(e0.endereco||'').trim()){
+    lat=null;lng=null;$('#ne-lat').value='';$('#ne-lng').value='';
+  }
   /* sem local marcado: tenta achar o endereço sozinho no mapa antes de salvar */
   if(lat==null&&lng==null&&usaReal()&&!form.dataset.geo){
     var end=fv(form,'endereco').trim();
@@ -217,10 +233,33 @@ function saveEntrega(form,mode){
     }
   }
   if(lat!=null&&lng!=null){var q=fromLL(lat,lng);px=Math.round(q.x);py=Math.round(q.y);}else{lat=null;lng=null;}
-  var id=++DB.seq.ent,n=nowIso();
   var op=fv(form,'op')==='coleta'?'coleta':'entrega';
+  if(e0){
+    Object.assign(e0,{tipo:op,x:px,y:py,lat:lat,lng:lng,cliente:fv(form,'cliente').trim(),endereco:fv(form,'endereco').trim(),motoristaId:fv(form,'mot'),prazo:pz.toISOString(),itens:itens,obs:fv(form,'obs').trim()});
+    afterChange(e0.id);toast((op==='coleta'?'Coleta #':'Entrega #')+e0.id+' alterada');return;
+  }
+  var id=++DB.seq.ent,n=nowIso();
   DB.entregas.push({id:id,tipo:op,x:px,y:py,lat:lat,lng:lng,dia:todayKey(),cliente:fv(form,'cliente').trim(),endereco:fv(form,'endereco').trim(),motoristaId:fv(form,'mot'),status:mode==='rota'?'em_rota':'separado',prazo:pz.toISOString(),criadoEm:n,saidaEm:mode==='rota'?n:null,concluidoEm:null,retornoEm:null,itens:itens,obs:fv(form,'obs').trim(),recebedor:'',foto:null,assinatura:null});
   save();closeModal();renderApp();toast((op==='coleta'?'Coleta #':'Entrega #')+id+(mode==='rota'?' despachada':' criada'));
+}
+/* cancelar: não apaga, marca como cancelada e guarda o motivo nas observações */
+function openCancelarEntrega(id){
+  var e=entById(id);if(!e||isConcl(e)||cancelada(e))return;
+  var col=ehColeta(e);
+  openModal(mh('Cancelar '+(col?'coleta':'entrega'),'#'+e.id+' · '+esc(e.cliente))+
+  '<form id="f-canc" class="dlg-b" data-id="'+id+'"><p>'+(col?'A coleta':'A entrega')+' não será apagada. Ela fica no histórico como <b>Cancelada</b> e sai da lista do motorista.</p>'+
+  (e.status==='em_rota'?'<p class="note" style="color:var(--warn)">O motorista já saiu com este pedido. Avise-o por telefone.</p>':'')+
+  '<div class="field"><label for="cn-m">Motivo do cancelamento</label><textarea id="cn-m" name="motivo" required autofocus></textarea></div>'+
+  '<div class="err" id="cn-err" role="alert"></div><div class="dlg-f"><button class="btn" type="button" data-act="open-ent" data-id="'+id+'">Voltar</button><button class="btn btn-danger" type="submit">Confirmar cancelamento</button></div></form>',true);
+}
+function saveCancelarEntrega(form){
+  var e=entById(+form.dataset.id),mot=fv(form,'motivo').trim();if(!e)return;
+  if(!mot){$('#cn-err').textContent='Escreva o motivo.';return;}
+  if(isConcl(e)||cancelada(e)){$('#cn-err').textContent='Este pedido já foi concluído ou cancelado.';return;}
+  var n=nowIso();
+  e.status='cancelada';e.concluidoEm=n;
+  e.obs=(e.obs?e.obs+' · ':'')+'Cancelada em '+ddmm(n)+' às '+hhmm(n)+': '+mot;
+  afterChange(e.id);toast((ehColeta(e)?'Coleta #':'Entrega #')+e.id+' cancelada');
 }
 function openOcForm(id){
   var e=entById(id);if(!e)return;

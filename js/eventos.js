@@ -32,6 +32,8 @@ document.addEventListener('click',function(ev){
     case 'abast-novo':UI.drv={screen:'abast',id:null};renderApp();window.scrollTo(0,0);break;
     case 'open-ent':openEntrega(n);break;
     case 'nova-ent':openNovaEntrega();break;
+    case 'ent-edit':openNovaEntrega(n);break;
+    case 'ent-cancel':openCancelarEntrega(n);break;
     case 'add-item':{var box=$('#itens');var d=document.createElement('div');d.innerHTML=itemRow();box.appendChild(d.firstChild);break;}
     case 'rm-item':{var rows=document.querySelectorAll('#itens .item-row');if(rows.length>1)t.closest('.item-row').remove();break;}
     case 'oc-new':openOcForm(n);break;
@@ -81,6 +83,7 @@ document.addEventListener('submit',function(ev){
   else if(f.id==='f-cad')salvarCadastro(f);
   else if(f.id==='f-ent')saveEntrega(f,(ev.submitter&&ev.submitter.dataset.mode)||'sep');
   else if(f.id==='f-loc')saveLocalizarEntrega(f);
+  else if(f.id==='f-canc')saveCancelarEntrega(f);
   else if(f.id==='f-col')saveColab(f);
   else if(f.id==='f-oc')saveOc(f);
   else if(f.id==='f-conf')finishConf(f);
