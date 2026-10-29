@@ -25,7 +25,7 @@ create table if not exists public.entregas (
   cliente       text not null,
   endereco      text default '',
   motorista_id  text references public.colaboradores(id),
-  status        text not null check (status in ('separado','em_rota','entregue','entregue_problema','devolvido','enviado_errado')),
+  status        text not null check (status in ('separado','em_rota','entregue','entregue_problema','devolvido','enviado_errado','cancelada')),
   prazo         timestamptz,
   criado_em     timestamptz,
   saida_em      timestamptz,
