@@ -50,6 +50,8 @@ document.addEventListener('click',function(ev){
     case 'drv-saida':{var e5=entById(n);e5.status='em_rota';e5.saidaEm=nowIso();save();renderApp();toast('Saída registrada');break;}
     case 'drv-saida-all':{var k=0,ts=nowIso();DB.entregas.forEach(function(e){if(e.motoristaId===SESSION.id&&e.status==='separado'){e.status='em_rota';e.saidaEm=ts;k++;}});save();renderApp();toast(k+(k===1?' pedido':' pedidos')+' em rota');break;}
     case 'drv-confirm':UI.drv={screen:'confirm',id:n};renderApp();window.scrollTo(0,0);break;
+    case 'ler-codigo':openLeitor();break;
+    case 'ler-abrir':{var e9=entById(n);closeModal();if(e9)leitorAbrir(e9);break;}
     case 'drv-back':UI.drv={screen:'home',id:null};renderApp();break;
     case 'drv-voltei':{var ts2=nowIso();DB.entregas.forEach(function(e){if(e.motoristaId===SESSION.id&&isConcl(e)&&!e.retornoEm)e.retornoEm=ts2;});save();renderApp();toast('Retorno registrado');break;}
     case 'sig-clear':{var cv=$('#sig');if(cv&&sigCtx){var r=cv.getBoundingClientRect();sigCtx.fillStyle='#fff';sigCtx.fillRect(0,0,r.width,r.height);UI.signed=false;}break;}
@@ -81,6 +83,7 @@ document.addEventListener('submit',function(ev){
   var f=ev.target;ev.preventDefault();
   if(f.id==='f-login')doLogin(fv(f,'u'),fv(f,'p'));
   else if(f.id==='f-cad')salvarCadastro(f);
+  else if(f.id==='f-leitor')leitorDigitado(f);
   else if(f.id==='f-ent')saveEntrega(f,(ev.submitter&&ev.submitter.dataset.mode)||'sep');
   else if(f.id==='f-loc')saveLocalizarEntrega(f);
   else if(f.id==='f-canc')saveCancelarEntrega(f);

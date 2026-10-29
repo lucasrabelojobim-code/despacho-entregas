@@ -122,7 +122,7 @@ function entTable(list,compact){
 function viewEntregas(){
   var f=UI.f;
   return '<div class="page-h"><div><h1>Entregas e coletas</h1><p>Acompanhe saída, entrega ou coleta e retorno de cada pedido.</p></div><button class="btn btn-primary" data-act="nova-ent">Nova entrega ou coleta</button></div>'+
-  '<div class="filters"><input type="search" aria-label="Buscar" data-bind="f.q" placeholder="Buscar cliente, número ou código" value="'+esc(f.q)+'">'+
+  '<div class="filters"><input type="search" aria-label="Buscar" data-bind="f.q" placeholder="Buscar cliente, número, OM ou código" value="'+esc(f.q)+'">'+
   '<select aria-label="Tipo" data-bind="f.op">'+opts([['','Entregas e coletas'],['entrega','Só entregas'],['coleta','Só coletas']],f.op)+'</select>'+
   '<select aria-label="Período" data-bind="f.dia">'+opts([['hoje','Hoje'],['7d','7 dias'],['todos','Todas']],f.dia)+'</select>'+
   '<select aria-label="Status" data-bind="f.status">'+opts([['','Todos os status']].concat(Object.keys(STATUS).map(function(k){return [k,STATUS[k].l];})),f.status)+'</select>'+
@@ -138,7 +138,7 @@ function filtroEntregas(){
     if(f.status&&e.status!==f.status)return false;
     if(f.mot&&e.motoristaId!==f.mot)return false;
     if(f.tipo){var m=colab(e.motoristaId);if(!m||m.tipo!==f.tipo)return false;}
-    if(q){var hay=(e.id+' '+e.cliente+' '+e.endereco+' '+e.itens.map(function(i){return i.codigo+' '+i.desc;}).join(' ')).toLowerCase();if(hay.indexOf(q)<0)return false;}
+    if(q){var hay=(e.id+' '+(e.om||'')+' '+e.cliente+' '+e.endereco+' '+e.itens.map(function(i){return i.codigo+' '+i.desc;}).join(' ')).toLowerCase();if(hay.indexOf(q)<0)return false;}
     return true;
   }).sort(function(a,b){return b.id-a.id;});
 }
@@ -173,7 +173,7 @@ function openEntregaView(id){
   if(usaReal()&&!temLocal(e))act+='<button class="btn" data-act="ent-loc" data-id="'+id+'">Localizar no mapa</button>';
   }
   openModal(mh('#'+e.id+' · '+esc(e.cliente),tagOp(e)+' '+pill(e.status,e.tipo)+(late(e)?' <span class="late">atrasada</span>':''))+
-  '<div class="dlg-b"><div class="kv"><div><span>Motorista</span>'+(m?esc(m.nome)+' '+tagTipo(m)+'<div class="sub">'+esc(m.tipo==='Terceirizado'?m.empresa+' · ':'')+esc(m.veiculo)+' '+esc(m.placa)+'</div>':'—')+'</div><div><span>Endereço</span>'+esc(e.endereco)+'</div><div><span>Dia</span>'+esc(e.dia.split('-').reverse().join('/'))+'</div><div><span>Prazo</span><span class="mono" style="font-size:14px;letter-spacing:0;text-transform:none;color:inherit;font-weight:400">'+hhmm(e.prazo)+'</span></div>'+(e.recebedor?'<div><span>Recebido por</span>'+esc(e.recebedor)+'</div>':'')+'</div>'+
+  '<div class="dlg-b"><div class="kv">'+(e.om?'<div><span>OM / Pedido</span><span class="mono">'+esc(e.om)+'</span></div>':'')+'<div><span>Motorista</span>'+(m?esc(m.nome)+' '+tagTipo(m)+'<div class="sub">'+esc(m.tipo==='Terceirizado'?m.empresa+' · ':'')+esc(m.veiculo)+' '+esc(m.placa)+'</div>':'—')+'</div><div><span>Endereço</span>'+esc(e.endereco)+'</div><div><span>Dia</span>'+esc(e.dia.split('-').reverse().join('/'))+'</div><div><span>Prazo</span><span class="mono" style="font-size:14px;letter-spacing:0;text-transform:none;color:inherit;font-weight:400">'+hhmm(e.prazo)+'</span></div>'+(e.recebedor?'<div><span>Recebido por</span>'+esc(e.recebedor)+'</div>':'')+'</div>'+
   tl+(dur.length?'<p class="note">'+dur.join(' · ')+'</p>':'')+it+
   (c?'<div class="evs"><div><div class="lbl" style="margin-bottom:6px">Foto da '+(col?'coleta':'entrega')+'</div>'+ev(e.foto,'Foto')+'</div><div><div class="lbl" style="margin-bottom:6px">Assinatura do cliente</div>'+ev(e.assinatura,'Assinatura')+'</div></div>':'')+
   ocH+(e.obs?'<div><div class="lbl">Observações</div><p>'+esc(e.obs)+'</p></div>':'')+(act?'<div class="dlg-f" style="justify-content:flex-start">'+act+'</div>':'')+'</div>');
@@ -193,7 +193,7 @@ function openNovaEntrega(id){
   /* motorista inativo que já estava na entrega continua aparecendo na lista */
   var mInat=e&&!ativos.some(function(c){return c.id===e.motoristaId;})&&colab(e.motoristaId);
   openModal(mh(e?'Editar '+(ehColeta(e)?'coleta':'entrega')+' #'+e.id:'Nova entrega ou coleta',e?'Altere o que precisar e salve.':'Informe os itens por código e quantidade.')+
-  '<form id="f-ent" class="dlg-b"'+(e?' data-id="'+e.id+'"':'')+'><div class="form-grid"><div class="field"><label for="ne-op">Tipo</label><select id="ne-op" name="op"><option value="entrega">Entrega (levar ao cliente)</option><option value="coleta"'+(e&&ehColeta(e)?' selected':'')+'>Coleta (buscar com o cliente)</option></select></div><div class="field"><label for="ne-c">Cliente</label><input id="ne-c" name="cliente" required autofocus value="'+(e?esc(e.cliente):'')+'"></div><div class="field"><label for="ne-e">Endereço</label><input id="ne-e" name="endereco" value="'+(e?esc(e.endereco||''):'')+'"></div>'+
+  '<form id="f-ent" class="dlg-b"'+(e?' data-id="'+e.id+'"':'')+'><div class="form-grid"><div class="field"><label for="ne-op">Tipo</label><select id="ne-op" name="op"><option value="entrega">Entrega (levar ao cliente)</option><option value="coleta"'+(e&&ehColeta(e)?' selected':'')+'>Coleta (buscar com o cliente)</option></select></div><div class="field"><label for="ne-c">Cliente</label><input id="ne-c" name="cliente" required autofocus value="'+(e?esc(e.cliente):'')+'"></div><div class="field"><label for="ne-e">Endereço</label><input id="ne-e" name="endereco" value="'+(e?esc(e.endereco||''):'')+'"></div><div class="field"><label for="ne-om">OM / Pedido (da etiqueta)</label><input id="ne-om" name="om" autocomplete="off" placeholder="Ex.: 137860" value="'+(e?esc(e.om||''):'')+'"></div>'+
   '<div class="field"><label for="ne-m">Motorista</label><select id="ne-m" name="mot" required>'+(mInat?'<option value="'+mInat.id+'" selected>'+esc(mInat.nome)+' (inativo)</option>':'')+grp('Efetivado')+grp('Terceirizado')+'</select></div><div class="field"><label for="ne-p">Prazo'+(e&&e.dia!==todayKey()?' ('+esc(e.dia.split('-').reverse().join('/'))+')':' (hoje)')+'</label><input id="ne-p" name="prazo" type="time" value="'+pz+'" required></div></div>'+
   '<div><div class="lbl" style="margin-bottom:6px">Local da entrega no mapa (opcional)</div>'+pickMapHtml()+'<p class="note" id="pick-note">Clique no mapa para marcar o local. Sem marcação, usamos o local do cliente cadastrado.</p><input type="hidden" name="px" id="ne-x"><input type="hidden" name="py" id="ne-y"><input type="hidden" name="plat" id="ne-lat"><input type="hidden" name="plng" id="ne-lng"></div>'+
   '<div><div class="lbl" style="margin-bottom:6px">Itens (código, descrição, quantidade)</div><div id="itens">'+(e&&e.itens.length?e.itens.map(itemRow).join(''):itemRow())+'</div><button type="button" class="btn btn-sm" data-act="add-item">Adicionar item</button></div>'+
@@ -235,11 +235,11 @@ function saveEntrega(form,mode){
   if(lat!=null&&lng!=null){var q=fromLL(lat,lng);px=Math.round(q.x);py=Math.round(q.y);}else{lat=null;lng=null;}
   var op=fv(form,'op')==='coleta'?'coleta':'entrega';
   if(e0){
-    Object.assign(e0,{tipo:op,x:px,y:py,lat:lat,lng:lng,cliente:fv(form,'cliente').trim(),endereco:fv(form,'endereco').trim(),motoristaId:fv(form,'mot'),prazo:pz.toISOString(),itens:itens,obs:fv(form,'obs').trim()});
+    Object.assign(e0,{tipo:op,x:px,y:py,lat:lat,lng:lng,cliente:fv(form,'cliente').trim(),endereco:fv(form,'endereco').trim(),om:fv(form,'om').trim(),motoristaId:fv(form,'mot'),prazo:pz.toISOString(),itens:itens,obs:fv(form,'obs').trim()});
     afterChange(e0.id);toast((op==='coleta'?'Coleta #':'Entrega #')+e0.id+' alterada');return;
   }
   var id=++DB.seq.ent,n=nowIso();
-  DB.entregas.push({id:id,tipo:op,x:px,y:py,lat:lat,lng:lng,dia:todayKey(),cliente:fv(form,'cliente').trim(),endereco:fv(form,'endereco').trim(),motoristaId:fv(form,'mot'),status:mode==='rota'?'em_rota':'separado',prazo:pz.toISOString(),criadoEm:n,saidaEm:mode==='rota'?n:null,concluidoEm:null,retornoEm:null,itens:itens,obs:fv(form,'obs').trim(),recebedor:'',foto:null,assinatura:null});
+  DB.entregas.push({id:id,tipo:op,x:px,y:py,lat:lat,lng:lng,dia:todayKey(),cliente:fv(form,'cliente').trim(),endereco:fv(form,'endereco').trim(),om:fv(form,'om').trim(),motoristaId:fv(form,'mot'),status:mode==='rota'?'em_rota':'separado',prazo:pz.toISOString(),criadoEm:n,saidaEm:mode==='rota'?n:null,concluidoEm:null,retornoEm:null,itens:itens,obs:fv(form,'obs').trim(),recebedor:'',foto:null,assinatura:null});
   save();closeModal();renderApp();toast((op==='coleta'?'Coleta #':'Entrega #')+id+(mode==='rota'?' despachada':' criada'));
 }
 /* cancelar: não apaga, marca como cancelada e guarda o motivo nas observações */

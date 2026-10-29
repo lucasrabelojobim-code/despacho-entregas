@@ -67,6 +67,12 @@ jobs:
       - name: Criar projeto Android
         run: npx cap add android
 
+      - name: Permissão de câmera (leitor de código de barras e QR code)
+        run: |
+          m=android/app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.CAMERA' $m || sed -i 's#</manifest>#    <uses-permission android:name="android.permission.CAMERA" />\n</manifest>#' $m
+          grep -n 'permission' $m
+
       - name: Ícone e número da versão
         run: |
           res=android/app/src/main/res

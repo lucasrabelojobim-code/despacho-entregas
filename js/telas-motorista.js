@@ -10,14 +10,14 @@ function dCard(e){
   var itens='<div class="itl">'+e.itens.map(function(i){return '<div><span class="mono">'+esc(i.codigo)+'</span><span>'+esc(i.desc)+'</span><b style="margin-left:auto">'+i.qtd+'</b></div>';}).join('')+'</div>';
   var col=ehColeta(e);
   var btn=e.status==='separado'?'<button class="btn btn-primary btn-lg" data-act="drv-saida" data-id="'+e.id+'">'+(col?'Saí para coleta':'Saí para entrega')+'</button>':'<button class="btn btn-primary btn-lg" data-act="drv-confirm" data-id="'+e.id+'">'+(col?'Confirmar coleta':'Confirmar entrega')+'</button>';
-  return '<article class="dcard"><div class="row" style="justify-content:space-between"><span class="mono muted">'+tagOp(e)+' '+(STOPNO[e.id]?'Parada '+STOPNO[e.id]+' · ':'')+'#'+e.id+'</span><span class="mono">Prazo '+hhmm(e.prazo)+(late(e)?' <span class="late">atrasada</span>':'')+'</span></div><div><h3>'+esc(e.cliente)+'</h3><div class="muted">'+esc(e.endereco)+'</div></div>'+itens+'<button class="btn btn-sm" style="align-self:flex-start" data-act="drv-map" data-id="'+e.id+'">Ver no mapa</button>'+(e.status==='em_rota'?'<div class="note">Saiu às '+hhmm(e.saidaEm)+'</div>':'')+btn+'</article>';
+  return '<article class="dcard" id="dc-'+e.id+'"><div class="row" style="justify-content:space-between"><span class="mono muted">'+tagOp(e)+' '+(STOPNO[e.id]?'Parada '+STOPNO[e.id]+' · ':'')+'#'+e.id+(e.om?' · OM '+esc(e.om):'')+'</span><span class="mono">Prazo '+hhmm(e.prazo)+(late(e)?' <span class="late">atrasada</span>':'')+'</span></div><div><h3>'+esc(e.cliente)+'</h3><div class="muted">'+esc(e.endereco)+'</div></div>'+itens+'<button class="btn btn-sm" style="align-self:flex-start" data-act="drv-map" data-id="'+e.id+'">Ver no mapa</button>'+(e.status==='em_rota'?'<div class="note">Saiu às '+hhmm(e.saidaEm)+'</div>':'')+btn+'</article>';
 }
 function viewDrvHome(c){
   var l=drvList(c),rota=l.filter(function(e){return e.status==='em_rota';}),sep=l.filter(function(e){return e.status==='separado';}),done=l.filter(isConcl);
   var pend=done.filter(function(e){return !e.retornoEm;}).length;
   var tot=l.length,pc=tot?Math.round(done.length*100/tot):0;
   var rt=routeOf(c,'driver');STOPNO={};if(rt)rt.stops.forEach(function(x,i){STOPNO[x.id]=i+1;});
-  var h='<div class="dwrap"><section class="dcard"><div class="row" style="justify-content:space-between"><b>Hoje</b><span class="num">'+done.length+' de '+tot+' concluídas</span></div><div class="meter m-ef" role="progressbar" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pc+'%"></i></div></section>'+abastCard(c)+gpsCard()+bioCard()+driverMapHtml(c,UI.drv.hl);
+  var h='<div class="dwrap"><section class="dcard"><div class="row" style="justify-content:space-between"><b>Hoje</b><span class="num">'+done.length+' de '+tot+' concluídas</span></div><div class="meter m-ef" role="progressbar" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pc+'%"></i></div></section><button class="btn btn-primary btn-lg" data-act="ler-codigo">Ler código de barras / QR code</button>'+abastCard(c)+gpsCard()+bioCard()+driverMapHtml(c,UI.drv.hl);
   if(rota.length)h+='<div class="dsec">Em rota ('+rota.length+')</div>'+rota.map(dCard).join('');
   if(sep.length){h+='<div class="dsec">Para sair ('+sep.length+')</div>';if(sep.length>1)h+='<button class="btn btn-lg" data-act="drv-saida-all">Saí com todas ('+sep.length+')</button>';h+=sep.map(dCard).join('');}
   if(!rota.length&&!sep.length)h+='<section class="dcard"><b>Nenhuma entrega pendente.</b><span class="muted">Novas entregas aparecem aqui assim que forem separadas.</span></section>';
@@ -34,7 +34,7 @@ function viewConfirm(c){
   UI.foto=null;UI.signed=false;
   var col=ehColeta(e);
   return '<div class="dwrap"><button class="btn" data-act="drv-back" style="align-self:flex-start">Voltar</button>'+
-  '<form id="f-conf" class="dcard" data-id="'+e.id+'"><div><span class="mono muted">'+tagOp(e)+' #'+e.id+'</span><h3>'+esc(e.cliente)+'</h3><div class="muted">'+esc(e.endereco)+'</div></div>'+
+  '<form id="f-conf" class="dcard" data-id="'+e.id+'"><div><span class="mono muted">'+tagOp(e)+' #'+e.id+(e.om?' · OM '+esc(e.om):'')+'</span><h3>'+esc(e.cliente)+'</h3><div class="muted">'+esc(e.endereco)+'</div></div>'+
   driverMapHtml(c,e.id,true)+'<div class="dsec" style="margin-bottom:0">Confira os itens</div><div>'+e.itens.map(function(i,ix){return '<div class="qrow"><div><span class="mono muted">'+esc(i.codigo)+'</span> '+esc(i.desc)+'<span class="sub">'+(col?'Previsto: ':'Enviado: ')+i.qtd+'</span></div><input name="q'+ix+'" type="number" min="0" max="'+i.qtd+'" value="'+i.qtd+'" aria-label="Quantidade '+(col?'coletada':'entregue')+' de '+esc(i.codigo)+'" inputmode="numeric"></div>';}).join('')+'</div>'+
   '<div class="dsec" style="margin-bottom:0">Resultado</div>'+
   (col?[['entregue','Coletada sem problema','Tudo conferido e retirado com o cliente'],['problema','Coletada com problema','Defeito, avaria ou item faltando'],['devolvido','Não coletada','Cliente sem o material ou ninguém para entregar'],['errado','Coleta errada','Produto ou quantidade diferente do combinado']]:

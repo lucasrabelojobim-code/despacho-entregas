@@ -50,10 +50,10 @@ var DadosOnline=(function(){
     return n;
   }
   var TS={prazo:1,criadoEm:1,saidaEm:1,concluidoEm:1,retornoEm:1,em:1};
-  var STR={empresa:1,veiculo:1,placa:1,telefone:1,cpf:1,matricula:1,obs:1,recebedor:1,endereco:1,codigo:1,motivo:1,usuario:1,modelo:1,combustivel:1,posto:1};
+  var STR={om:1,empresa:1,veiculo:1,placa:1,telefone:1,cpf:1,matricula:1,obs:1,recebedor:1,endereco:1,codigo:1,motivo:1,usuario:1,modelo:1,combustivel:1,posto:1};
   var MAPA={
     colaboradores:{id:'id',nome:'nome',tipo:'tipo',empresa:'empresa',veiculo:'veiculo',placa:'placa',telefone:'telefone',usuario:'usuario',cpf:'cpf',matricula:'matricula',ativo:'ativo',token:'token',authId:'auth_id'},
-    entregas:{id:'id',dia:'dia',cliente:'cliente',endereco:'endereco',motoristaId:'motorista_id',status:'status',prazo:'prazo',criadoEm:'criado_em',saidaEm:'saida_em',concluidoEm:'concluido_em',retornoEm:'retorno_em',tipo:'tipo',itens:'itens',obs:'obs',recebedor:'recebedor',foto:'foto',assinatura:'assinatura',x:'x',y:'y',lat:'lat',lng:'lng'},
+    entregas:{id:'id',dia:'dia',om:'om',cliente:'cliente',endereco:'endereco',motoristaId:'motorista_id',status:'status',prazo:'prazo',criadoEm:'criado_em',saidaEm:'saida_em',concluidoEm:'concluido_em',retornoEm:'retorno_em',tipo:'tipo',itens:'itens',obs:'obs',recebedor:'recebedor',foto:'foto',assinatura:'assinatura',x:'x',y:'y',lat:'lat',lng:'lng'},
     ocorrencias:{id:'id',entregaId:'entrega_id',dia:'dia',tipo:'tipo',codigo:'codigo',motivo:'motivo',em:'em',motoristaId:'motorista_id'},
     veiculos:{id:'id',placa:'placa',tipo:'tipo',modelo:'modelo',combustivel:'combustivel',capacidade:'capacidade',kmInicial:'km_inicial',metaKml:'meta_kml',ativo:'ativo'},
     abastecimentos:{id:'id',veiculoId:'veiculo_id',motoristaId:'motorista_id',em:'em',km:'km',litros:'litros',valor:'valor',cheio:'cheio',posto:'posto',fotoOdometro:'foto_odometro',fotoNota:'foto_nota',obs:'obs',origem:'origem'}
@@ -69,6 +69,8 @@ var DadosOnline=(function(){
     var m=MAPA[tab],r={};Object.keys(m).forEach(function(k){var v=o[k];r[m[k]]=(v===undefined?null:v);});
     /* entrega comum não manda a coluna "tipo": assim o site continua funcionando mesmo antes do arquivo 05 do banco */
     if(tab==='entregas'&&(r.tipo==null||r.tipo==='entrega'))delete r.tipo;
+    /* sem OM não manda a coluna: funciona mesmo antes do arquivo 10 do banco */
+    if(tab==='entregas'&&!r.om)delete r.om;
     return r;
   }
   function fromRow(tab,r){

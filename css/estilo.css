@@ -370,3 +370,8 @@ input[type=checkbox]{accent-color:var(--accent)}
 .alertas-f{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
 
 .offline-bar{background:#3B2A12;color:#FFEBC8;border-bottom:1px solid #F5B14C}
+/* leitor de código de barras / QR code */
+.leitor{position:relative;background:#000;border-radius:8px;overflow:hidden;aspect-ratio:4/3}
+.leitor video{width:100%;height:100%;object-fit:cover;display:block}
+.leitor-mira{position:absolute;left:8%;right:8%;top:30%;bottom:30%;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 999px rgba(0,0,0,.35);pointer-events:none}
+.dcard-hl{outline:3px solid var(--accent);outline-offset:2px}
